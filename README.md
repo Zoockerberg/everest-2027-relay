@@ -1,5 +1,8 @@
 # Everest 2027 — 100km SkiErg Relay
 
+**Live:** https://zoockerberg.github.io/everest-2027-relay/
+(repo: https://github.com/Zoockerberg/everest-2027-relay)
+
 Public event landing page for a charity SkiErg relay (3–4 Oct 2026) raising
 money for Perth Children's Hospital Foundation. Recreated from the design
 handoff at `Claude Cowork/design_handoff_everest_relay/` (React + TypeScript +
@@ -50,6 +53,14 @@ src/
 
 ## Deploying
 
-Not yet deployed anywhere. `npm run build` produces a static `dist/` — this
-is a plain static site (no server-side logic), so any static host (Vercel,
-Netlify, GitHub Pages, Cloudflare Pages) works once you're ready to ship.
+Live on GitHub Pages, served from the `gh-pages` branch. To ship a change:
+
+```bash
+npm run build
+npx gh-pages -d dist -m "Deploy update"
+```
+
+`vite.config.ts` sets `base: '/everest-2027-relay/'` to match the Pages
+subpath — update it first if this ever moves to a custom domain or a
+different host (Vercel, Netlify, Cloudflare Pages all work fine too, this is
+a plain static site).
