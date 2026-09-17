@@ -32,6 +32,6 @@ export const DAYS_CONFIG: DayConfig[] = [
 export const FALLBACK_CONFIRMED: Record<string, string[]> = {};
 
 // URL of the deployed Google Apps Script Web App (see google-apps-script/
-// README.md for setup steps). Empty until you deploy it — the site falls
-// back to FALLBACK_CONFIRMED and local-only submissions until this is set.
-export const APPS_SCRIPT_URL = "";
+// README.md for setup steps).
+export const APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbwZ3NYx9eq6y-l6bVsruEEL8cUs9oNcAO_gIba3PnHZqKvgprb1WYtKrcp5146VVHeT/exec";
