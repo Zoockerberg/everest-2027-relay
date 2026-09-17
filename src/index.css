@@ -806,6 +806,12 @@ button {
   cursor: not-allowed;
 }
 
+.modal-error {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--accent);
+}
+
 .modal-fineprint {
   font-size: 13.5px;
   line-height: 1.5;

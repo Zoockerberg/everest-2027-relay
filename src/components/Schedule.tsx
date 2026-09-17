@@ -5,14 +5,15 @@ import { useLanguage } from "../i18n/LanguageContext";
 interface ScheduleProps {
   selected: string | null;
   onSlotClick: (key: string, isSelected: boolean) => void;
+  confirmed: Record<string, string[]>;
 }
 
 const Schedule = forwardRef<HTMLElement, ScheduleProps>(function Schedule(
-  { selected, onSlotClick },
+  { selected, onSlotClick, confirmed },
   ref,
 ) {
   const { lang, t } = useLanguage();
-  const days = buildDays(lang, t);
+  const days = buildDays(lang, t, confirmed);
 
   return (
     <section className="schedule" ref={ref}>

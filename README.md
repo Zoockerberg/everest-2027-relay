@@ -20,8 +20,12 @@ npm run dev
 ```
 src/
   config.ts            — event props (isLive, liveNote, streamUrl, donateUrl),
-                          countdown target, and the confirmed-slots data
-  lib/schedule.ts       — slot/day formatting helpers
+                          countdown target, day/slot config, and
+                          APPS_SCRIPT_URL (booking backend)
+  lib/
+    schedule.ts          — slot/day formatting helpers
+    api.ts                — fetch confirmed slots / submit a registration
+  i18n/                 — EN/FR translations + language context
   hooks/
     useCountdown.ts      — 5s countdown ticker
     useParallax.ts       — scroll-driven ridge parallax
@@ -33,18 +37,14 @@ src/
 
 ## What's real vs. stubbed
 
-- **Slot data is hardcoded** in `src/config.ts` (`CONFIRMED`), and the join
-  form only sets local state (`App.tsx`'s `handleSubmit`) — same as the
-  design prototype. Nothing is submitted anywhere yet.
-- **No backend is wired up.** The original spec
-  (`design_handoff_everest_relay/spec/WEBSITE_SPEC.md`) proposes a Google
-  Sheet + Apps Script backend: a `doGet` returning confirmed registrations as
-  JSON, and a `doPost` for new pending sign-ups, with the organiser flipping
-  `status` from `pending` to `confirmed` directly in the Sheet. Building that
-  needs a Google account/Sheet to deploy against, so it hasn't been built —
-  say the word when you're ready and it's a small, self-contained change:
-  swap `CONFIRMED` for a `fetch` in `config.ts`/`Schedule.tsx`, and point
-  `handleSubmit` in `App.tsx` at the Apps Script `doPost` URL.
+- **Booking backend: code is ready, not deployed yet.** The site fetches
+  confirmed slots and submits new registrations via a Google Apps Script Web
+  App (`google-apps-script/Code.gs`) backed by a Google Sheet. Until you
+  deploy it and set `APPS_SCRIPT_URL` in `src/config.ts`, the site falls back
+  to an empty local list (all slots show open) and submissions fail with an
+  on-screen error rather than silently pretending to work. **Setup steps:
+  [`google-apps-script/README.md`](./google-apps-script/README.md)** — about
+  10 minutes, needs your own Google account.
 - **Donate/stream/social links** are placeholders from the design handoff
   (`src/config.ts`, `Footer.tsx`) — confirm the real YouTube stream URL and
   Instagram/Facebook profile links before launch.

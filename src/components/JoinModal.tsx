@@ -10,6 +10,8 @@ interface JoinModalProps {
   onClose: () => void;
   onSubmit: () => void;
   submitDisabled: boolean;
+  submitting: boolean;
+  error: boolean;
 }
 
 export default function JoinModal({
@@ -21,6 +23,8 @@ export default function JoinModal({
   onClose,
   onSubmit,
   submitDisabled,
+  submitting,
+  error,
 }: JoinModalProps) {
   const { t } = useLanguage();
   const stop = (e: MouseEvent) => e.stopPropagation();
@@ -57,11 +61,12 @@ export default function JoinModal({
           <button
             type="button"
             onClick={onSubmit}
-            disabled={submitDisabled}
-            className={`btn btn--confirm${submitDisabled ? " btn--confirm-disabled" : ""}`}
+            disabled={submitDisabled || submitting}
+            className={`btn btn--confirm${submitDisabled || submitting ? " btn--confirm-disabled" : ""}`}
           >
-            {t.confirm}
+            {submitting ? t.submitting : t.confirm}
           </button>
+          {error && <div className="modal-error">{t.submitError}</div>}
           <div className="modal-fineprint">{t.modalFineprint}</div>
         </div>
       </div>

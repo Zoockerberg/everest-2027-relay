@@ -26,9 +26,12 @@ export const DAYS_CONFIG: DayConfig[] = [
   { date: "2026-10-04", startHour: 3, count: 7 },
 ];
 
-// Confirmed registrations, keyed by "YYYY-MM-DD HH:00". Reset to empty so
-// booking starts fresh. Replace with a fetch from the real backend (see
-// README.md) — capacity is 2 confirmed names per slot. Only confirmed rows
-// should ever reach this map; pending submissions stay invisible until the
-// organiser approves them.
-export const CONFIRMED: Record<string, string[]> = {};
+// Fallback confirmed-registrations map, keyed by "YYYY-MM-DD HH:00" — used
+// only when APPS_SCRIPT_URL below is empty (i.e. the backend isn't deployed
+// yet). Once deployed, the real data comes from the Google Sheet instead.
+export const FALLBACK_CONFIRMED: Record<string, string[]> = {};
+
+// URL of the deployed Google Apps Script Web App (see google-apps-script/
+// README.md for setup steps). Empty until you deploy it — the site falls
+// back to FALLBACK_CONFIRMED and local-only submissions until this is set.
+export const APPS_SCRIPT_URL = "";

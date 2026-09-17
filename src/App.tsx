@@ -1,22 +1,31 @@
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Hero from "./components/Hero";
 import About from "./components/About";
 import Schedule from "./components/Schedule";
 import JoinModal from "./components/JoinModal";
 import ThanksModal from "./components/ThanksModal";
 import Footer from "./components/Footer";
-import { selectionLabel } from "./lib/schedule";
+import { parseSlotKey, selectionLabel } from "./lib/schedule";
+import { fetchConfirmedSlots, submitRegistration } from "./lib/api";
+import { FALLBACK_CONFIRMED } from "./config";
 import { useLanguage } from "./i18n/LanguageContext";
 
 export default function App() {
   const { lang, t } = useLanguage();
   const scheduleRef = useRef<HTMLElement>(null);
 
+  const [confirmed, setConfirmed] = useState(FALLBACK_CONFIRMED);
   const [selected, setSelected] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
+
+  useEffect(() => {
+    fetchConfirmedSlots().then(setConfirmed);
+  }, []);
 
   const ready = !!selected && name.trim().length > 1 && phone.trim().length > 5;
 
@@ -33,12 +42,20 @@ export default function App() {
     setSelected(key);
     setModalOpen(false);
     setSubmitted(null);
+    setSubmitError(false);
   };
 
-  const handleSubmit = () => {
-    if (!ready || !selected) return;
-    // Prototype only sets local state — wire this to the real backend
-    // (see BACKEND.md) as a POST that creates a pending registration.
+  const handleSubmit = async () => {
+    if (!ready || !selected || submitting) return;
+    setSubmitting(true);
+    setSubmitError(false);
+    const { date, startTime } = parseSlotKey(selected);
+    const ok = await submitRegistration({ date, startTime, name: name.trim(), phone: phone.trim() });
+    setSubmitting(false);
+    if (!ok) {
+      setSubmitError(true);
+      return;
+    }
     setSubmitted(selected);
     setSelected(null);
     setModalOpen(false);
@@ -50,7 +67,7 @@ export default function App() {
     <>
       <Hero onSkiClick={scrollToSchedule} />
       <About />
-      <Schedule ref={scheduleRef} selected={selected} onSlotClick={handleSlotClick} />
+      <Schedule ref={scheduleRef} selected={selected} onSlotClick={handleSlotClick} confirmed={confirmed} />
       <Footer />
 
       {modalOpen && !submitted && selected && (
@@ -63,6 +80,8 @@ export default function App() {
           onClose={() => setModalOpen(false)}
           onSubmit={handleSubmit}
           submitDisabled={!ready}
+          submitting={submitting}
+          error={submitError}
         />
       )}
 

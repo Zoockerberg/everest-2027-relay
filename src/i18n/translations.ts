@@ -42,6 +42,8 @@ export interface Dict {
   fullNamePlaceholder: string;
   phonePlaceholder: string;
   confirm: string;
+  submitting: string;
+  submitError: string;
   modalFineprint: string;
   thanksTitle: string;
   thanksPending: string;
@@ -95,6 +97,8 @@ export const translations: Record<Lang, Dict> = {
     fullNamePlaceholder: "Full name",
     phonePlaceholder: "Phone number",
     confirm: "Confirm",
+    submitting: "Sending…",
+    submitError: "Something went wrong — please try again.",
     modalFineprint:
       "Your phone number is for the organiser only and is never shown on the page. Joining creates a pending registration for that hour.",
     thanksTitle: "Thanks — we'll confirm your slot shortly",
@@ -147,6 +151,8 @@ export const translations: Record<Lang, Dict> = {
     fullNamePlaceholder: "Nom complet",
     phonePlaceholder: "Numéro de téléphone",
     confirm: "Confirmer",
+    submitting: "Envoi…",
+    submitError: "Une erreur est survenue — veuillez réessayer.",
     modalFineprint:
       "Votre numéro de téléphone est réservé à l'organisateur et n'est jamais affiché sur la page. Votre inscription crée une réservation en attente pour cette heure.",
     thanksTitle: "Merci — nous confirmerons votre créneau sous peu",

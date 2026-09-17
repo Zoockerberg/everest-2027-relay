@@ -1,8 +1,13 @@
-import { CONFIRMED, DAYS_CONFIG } from "../config";
+import { DAYS_CONFIG } from "../config";
 import type { Dict, Lang } from "../i18n/translations";
 
 export function slotKey(date: string, hour: number): string {
   return `${date} ${String(hour).padStart(2, "0")}:00`;
+}
+
+// "2026-10-03 09:00" -> { date: "2026-10-03", startTime: "09:00" }
+export function parseSlotKey(key: string): { date: string; startTime: string } {
+  return { date: key.slice(0, 10), startTime: key.slice(11) };
 }
 
 // English uses a 12h am/pm clock ("6:00am"); French uses a 24h clock with
@@ -39,13 +44,13 @@ export function dayAbbr(date: string, t: Dict): string {
   return date === FIRST_DAY_DATE ? t.dayAbbrSat : t.dayAbbrSun;
 }
 
-export function buildDays(lang: Lang, t: Dict): Day[] {
+export function buildDays(lang: Lang, t: Dict, confirmed: Record<string, string[]>): Day[] {
   return DAYS_CONFIG.map((day) => {
     const slots: Slot[] = [];
     for (let i = 0; i < day.count; i++) {
       const hour = day.startHour + i;
       const key = slotKey(day.date, hour);
-      const names = CONFIRMED[key] ?? [];
+      const names = confirmed[key] ?? [];
       slots.push({
         key,
         time: `${formatHour(hour, lang)} – ${formatHour(hour + 1, lang)}`,
