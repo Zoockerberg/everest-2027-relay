@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { buildDays } from "../lib/schedule";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface ScheduleProps {
   selected: string | null;
@@ -10,16 +11,14 @@ const Schedule = forwardRef<HTMLElement, ScheduleProps>(function Schedule(
   { selected, onSlotClick },
   ref,
 ) {
-  const days = buildDays();
+  const { lang, t } = useLanguage();
+  const days = buildDays(lang, t);
 
   return (
     <section className="schedule" ref={ref}>
       <div className="schedule__inner">
-        <h2 className="h2">Take an hour</h2>
-        <p className="schedule__intro">
-          22 public slots, two skiers per hour. Pick the hour you want — the organiser confirms
-          you before your name goes on the board.
-        </p>
+        <h2 className="h2">{t.scheduleHeading}</h2>
+        <p className="schedule__intro">{t.scheduleIntro}</p>
 
         {days.map((day) => (
           <div className="day-group" key={day.label}>
@@ -33,11 +32,11 @@ const Schedule = forwardRef<HTMLElement, ScheduleProps>(function Schedule(
                 const namesText = slot.names.length
                   ? slot.names.join(" · ")
                   : isSel
-                    ? "Selected"
-                    : "Open";
+                    ? t.slotSelected
+                    : t.slotOpen;
                 const countText = slot.isFull
-                  ? "2/2 full"
-                  : `${slot.names.length}/2 ${slot.names.length === 0 ? "open" : "confirmed"}`;
+                  ? t.slotFullCount
+                  : `${slot.names.length}/2 ${slot.names.length === 0 ? t.slotOpenCount : t.slotConfirmedCount}`;
 
                 return (
                   <button
@@ -52,7 +51,7 @@ const Schedule = forwardRef<HTMLElement, ScheduleProps>(function Schedule(
                       <span className="slot-card__count">{countText}</span>
                     </span>
                     <span className="slot-card__names">{namesText}</span>
-                    {isSel && <span className="slot-card__join">Join this slot</span>}
+                    {isSel && <span className="slot-card__join">{t.joinThisSlot}</span>}
                   </button>
                 );
               })}
@@ -60,9 +59,7 @@ const Schedule = forwardRef<HTMLElement, ScheduleProps>(function Schedule(
           </div>
         ))}
 
-        <div className="schedule__footnote">
-          8:00pm Sat – 3:00am Sun is the core team&rsquo;s overnight stretch
-        </div>
+        <div className="schedule__footnote">{t.scheduleFootnote}</div>
       </div>
     </section>
   );

@@ -2,8 +2,10 @@ import { useParallax } from "../hooks/useParallax";
 import { useSnowCanvas } from "../hooks/useSnowCanvas";
 import { useCountdown } from "../hooks/useCountdown";
 import SkierScene from "./SkierScene";
+import LanguageSwitch from "./LanguageSwitch";
 import pchfLogo from "../assets/pchf-logo.png";
 import { EVENT_CONFIG } from "../config";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface HeroProps {
   onSkiClick: () => void;
@@ -14,6 +16,7 @@ export default function Hero({ onSkiClick }: HeroProps) {
   const snowCanvasRef = useSnowCanvas();
   const countdown = useCountdown();
   const { isLive, liveNote, streamUrl, donateUrl } = EVENT_CONFIG;
+  const { t } = useLanguage();
 
   return (
     <section className="hero">
@@ -59,16 +62,19 @@ export default function Hero({ onSkiClick }: HeroProps) {
       <header className="hero__header">
         <div>
           <div className="eyebrow eyebrow--cream">Everest 2027</div>
-          <div className="hero__cause">For Perth Children's Hospital Foundation</div>
+          <div className="hero__cause">{t.causeLine}</div>
         </div>
-        <div className="hero__project">Project Beyond Limits</div>
+        <div className="hero__header-right">
+          <div className="hero__project">Project Beyond Limits</div>
+          <LanguageSwitch />
+        </div>
       </header>
 
       {isLive && (
         <div className="hero__live-row">
           <div className="hero__live-badge">
             <span className="hero__live-dot" />
-            <span className="hero__live-text">Live now</span>
+            <span className="hero__live-text">{t.liveNow}</span>
             <span className="hero__live-note">{liveNote}</span>
           </div>
         </div>
@@ -77,19 +83,16 @@ export default function Hero({ onSkiClick }: HeroProps) {
       <div className="hero__content">
         <div className="hero__column">
           <h1 className="hero__title">
-            100km
+            {t.heroTitleLine1}
             <br />
-            SkiErg Relay
+            {t.heroTitleLine2}
           </h1>
-          <p className="hero__intro">
-            Every dollar donated helps WA&rsquo;s sick kids at Perth Children&rsquo;s Hospital —
-            and pushes us further than 100km.
-          </p>
+          <p className="hero__intro">{t.heroIntro}</p>
 
           <SkierScene />
 
           <div className="countdown">
-            <div className="countdown__label">Starts in</div>
+            <div className="countdown__label">{t.startsIn}</div>
             <div className="countdown__digits">
               <span>{countdown.days}</span>
               <span className="countdown__colon">:</span>
@@ -97,7 +100,7 @@ export default function Hero({ onSkiClick }: HeroProps) {
               <span className="countdown__colon">:</span>
               <span>{countdown.mins}</span>
             </div>
-            <div className="countdown__units">dd : hh : mm</div>
+            <div className="countdown__units">{t.countdownUnits}</div>
           </div>
 
           <div className="cta-stack">
@@ -107,7 +110,7 @@ export default function Hero({ onSkiClick }: HeroProps) {
               rel="noopener"
               className="btn btn--primary"
             >
-              Donate Now
+              {t.donateNow}
             </a>
             <div className="cta-row">
               <a
@@ -116,22 +119,22 @@ export default function Hero({ onSkiClick }: HeroProps) {
                 rel="noopener"
                 className={`btn btn--secondary${isLive ? " btn--pulse" : ""}`}
               >
-                Watch Live
+                {t.watchLive}
               </a>
               <button onClick={onSkiClick} className="btn btn--secondary">
-                I want to Ski!
+                {t.iWantToSki}
               </button>
             </div>
           </div>
 
           <div className="stat-row">
-            <span>3–4 Oct</span>
-            <span>29 hour cap</span>
-            <span className="stat-row__chip">100% to PCHF</span>
+            <span>{t.statDate}</span>
+            <span>{t.statHourCap}</span>
+            <span className="stat-row__chip">{t.statChip}</span>
           </div>
 
           <div className="pchf-lockup">
-            <div className="eyebrow eyebrow--muted">In support of</div>
+            <div className="eyebrow eyebrow--muted">{t.inSupportOf}</div>
             <img src={pchfLogo} alt="Perth Children's Hospital Foundation" className="pchf-lockup__logo" />
           </div>
         </div>

@@ -1,4 +1,5 @@
 import type { ChangeEvent, MouseEvent } from "react";
+import { useLanguage } from "../i18n/LanguageContext";
 
 interface JoinModalProps {
   selectionLabel: string;
@@ -21,6 +22,7 @@ export default function JoinModal({
   onSubmit,
   submitDisabled,
 }: JoinModalProps) {
+  const { t } = useLanguage();
   const stop = (e: MouseEvent) => e.stopPropagation();
 
   return (
@@ -28,8 +30,10 @@ export default function JoinModal({
       <div className="modal-panel" onClick={stop}>
         <div className="modal-panel__header">
           <div>
-            <div className="modal-panel__title">Join this slot</div>
-            <div className="modal-panel__selection">Joining {selectionLabel}</div>
+            <div className="modal-panel__title">{t.modalTitle}</div>
+            <div className="modal-panel__selection">
+              {t.joining} {selectionLabel}
+            </div>
           </div>
           <button type="button" onClick={onClose} className="modal-close" aria-label="Close">
             ×
@@ -40,13 +44,13 @@ export default function JoinModal({
           <input
             value={name}
             onChange={onChangeName}
-            placeholder="Full name"
+            placeholder={t.fullNamePlaceholder}
             className="text-input"
           />
           <input
             value={phone}
             onChange={onChangePhone}
-            placeholder="Phone number"
+            placeholder={t.phonePlaceholder}
             type="tel"
             className="text-input"
           />
@@ -56,12 +60,9 @@ export default function JoinModal({
             disabled={submitDisabled}
             className={`btn btn--confirm${submitDisabled ? " btn--confirm-disabled" : ""}`}
           >
-            Confirm
+            {t.confirm}
           </button>
-          <div className="modal-fineprint">
-            Your phone number is for the organiser only and is never shown on the page. Joining
-            creates a pending registration for that hour.
-          </div>
+          <div className="modal-fineprint">{t.modalFineprint}</div>
         </div>
       </div>
     </div>

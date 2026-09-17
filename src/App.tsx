@@ -6,8 +6,10 @@ import JoinModal from "./components/JoinModal";
 import ThanksModal from "./components/ThanksModal";
 import Footer from "./components/Footer";
 import { selectionLabel } from "./lib/schedule";
+import { useLanguage } from "./i18n/LanguageContext";
 
 export default function App() {
+  const { lang, t } = useLanguage();
   const scheduleRef = useRef<HTMLElement>(null);
 
   const [selected, setSelected] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function App() {
 
       {modalOpen && !submitted && selected && (
         <JoinModal
-          selectionLabel={selectionLabel(selected)}
+          selectionLabel={selectionLabel(selected, lang, t)}
           name={name}
           phone={phone}
           onChangeName={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
@@ -64,12 +66,7 @@ export default function App() {
         />
       )}
 
-      {submitted && (
-        <ThanksModal
-          detail={`Pending: ${selectionLabel(submitted)}. Your name appears on the schedule once the organiser confirms it.`}
-          onDone={() => setSubmitted(null)}
-        />
-      )}
+      {submitted && <ThanksModal submittedKey={submitted} onDone={() => setSubmitted(null)} />}
     </>
   );
 }

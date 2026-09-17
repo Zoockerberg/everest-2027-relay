@@ -1,7 +1,9 @@
 import { EVENT_CONFIG } from "../config";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Footer() {
   const { donateUrl, streamUrl } = EVENT_CONFIG;
+  const { t } = useLanguage();
 
   return (
     <footer className="footer">
@@ -14,14 +16,14 @@ export default function Footer() {
       <div className="footer__inner">
         <div>
           <div className="footer__brand">Everest 2027</div>
-          <div className="footer__tagline">In support of PCHF · Project Beyond Limits</div>
+          <div className="footer__tagline">{t.footerTagline}</div>
         </div>
         <div className="footer__links">
           <a href={donateUrl} target="_blank" rel="noopener">
-            Donate
+            {t.footerDonate}
           </a>
           <a href={streamUrl} target="_blank" rel="noopener">
-            Watch live
+            {t.footerWatchLive}
           </a>
           <a href="https://www.instagram.com/" target="_blank" rel="noopener">
             Instagram
