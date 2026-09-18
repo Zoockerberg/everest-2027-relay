@@ -25,12 +25,6 @@ export default function Footer() {
           <a href={streamUrl} target="_blank" rel="noopener">
             {t.footerWatchLive}
           </a>
-          <a href="https://www.instagram.com/" target="_blank" rel="noopener">
-            Instagram
-          </a>
-          <a href="https://www.facebook.com/" target="_blank" rel="noopener">
-            Facebook
-          </a>
         </div>
       </div>
 
