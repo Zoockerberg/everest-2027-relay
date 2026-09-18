@@ -49,17 +49,24 @@ function setTotalRaised_(value) {
   getDonationSheet_().getRange("B1").setValue(value);
 }
 
-// Sheets sometimes auto-converts a plain "2026-10-03" string into a real
-// Date cell. Handle both so the key format stays consistent either way.
+// Sheets sometimes auto-converts a plain "2026-10-03" (or "06:00") string
+// into a real Date cell. Handle both so the key format stays consistent
+// either way. Duck-typed rather than `instanceof Date` — values coming back
+// from Range#getValues() can be Date-like objects from a different
+// execution realm that fail a plain instanceof check.
+function isDateValue_(value) {
+  return !!value && typeof value.getFullYear === "function" && typeof value.getTime === "function";
+}
+
 function formatDateCell_(value) {
-  if (value instanceof Date) {
+  if (isDateValue_(value)) {
     return Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
   }
   return String(value).trim();
 }
 
 function formatTimeCell_(value) {
-  if (value instanceof Date) {
+  if (isDateValue_(value)) {
     return Utilities.formatDate(value, Session.getScriptTimeZone(), "HH:mm");
   }
   return String(value).trim();

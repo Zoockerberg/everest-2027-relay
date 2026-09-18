@@ -16,10 +16,16 @@ const FALLBACK_EVENT_DATA: EventData = { confirmed: FALLBACK_CONFIRMED, totalRai
 
 // GET is a "simple" cross-origin request, so no CORS preflight is involved
 // and Apps Script's response is readable as-is.
+//
+// Cache-busted with a timestamp query param, and `cache: "no-store"" on top
+// — Apps Script Web App GET responses can otherwise get cached (by the
+// browser, or at Google's edge), which shows up as "I confirmed a booking
+// but the site still doesn't show the name."
 export async function fetchEventData(): Promise<EventData> {
   if (!APPS_SCRIPT_URL) return FALLBACK_EVENT_DATA;
   try {
-    const res = await fetch(APPS_SCRIPT_URL, { method: "GET" });
+    const url = `${APPS_SCRIPT_URL}?_=${Date.now()}`;
+    const res = await fetch(url, { method: "GET", cache: "no-store" });
     if (!res.ok) return FALLBACK_EVENT_DATA;
     const data = await res.json();
     return {

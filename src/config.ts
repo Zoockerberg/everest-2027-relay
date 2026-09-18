@@ -36,12 +36,26 @@ export const FALLBACK_CONFIRMED: Record<string, string[]> = {};
 export const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwZ3NYx9eq6y-l6bVsruEEL8cUs9oNcAO_gIba3PnHZqKvgprb1WYtKrcp5146VVHeT/exec";
 
-// How the headline distance grows with donations: starts at BASE_DISTANCE_KM
-// and adds 1km per DOLLARS_PER_KM raised. Tune these two numbers to taste —
-// e.g. DOLLARS_PER_KM: 20 makes it climb 2.5x faster for the same donations.
-// Everything else (formatting, the live counter) recalculates automatically.
-export const BASE_DISTANCE_KM = 100;
-export const DOLLARS_PER_KM = 50;
+export interface DistanceBreakpoint {
+  dollars: number;
+  km: number;
+}
+
+// How the headline distance grows with donations: front-loaded and
+// tapering, then a flat permanent rate past $10,000 so large late donations
+// still visibly move the number. Distance is interpolated linearly between
+// consecutive points; past the last point it grows at DOLLARS_PER_KM_BEYOND
+// forever (no cap). Edit these two exports to retune the curve — everything
+// else (formatting, the live counter) recalculates automatically.
+export const DISTANCE_CURVE: DistanceBreakpoint[] = [
+  { dollars: 0, km: 100 }, // base target
+  { dollars: 1_000, km: 190 }, // +90km, ~$11.10/km
+  { dollars: 2_500, km: 245 }, // +55km, ~$27.30/km
+  { dollars: 4_500, km: 290 }, // +45km, ~$44.40/km
+  { dollars: 7_000, km: 325 }, // +35km, ~$71.40/km
+  { dollars: 10_000, km: 350 }, // +25km, $120/km
+];
+export const DOLLARS_PER_KM_BEYOND = 120; // $10,000+: +1km per $120, uncapped
 
 // How often the browser re-polls the backend for new donations/bookings
 // while someone has the page open (milliseconds).
