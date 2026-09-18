@@ -52,6 +52,7 @@ export interface Dict {
   footerTagline: string;
   footerDonate: string;
   footerWatchLive: string;
+  madePossibleBy: string;
 }
 
 export const translations: Record<Lang, Dict> = {
@@ -108,6 +109,7 @@ export const translations: Record<Lang, Dict> = {
     footerTagline: "In support of PCHF · Project Beyond Limits",
     footerDonate: "Donate",
     footerWatchLive: "Watch live",
+    madePossibleBy: "Made possible by",
   },
   fr: {
     causeLine: "Au profit de la Perth Children's Hospital Foundation",
@@ -162,5 +164,6 @@ export const translations: Record<Lang, Dict> = {
     footerTagline: "Au profit de PCHF · Project Beyond Limits",
     footerDonate: "Faire un don",
     footerWatchLive: "Voir en direct",
+    madePossibleBy: "Rendu possible par",
   },
 };

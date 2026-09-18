@@ -33,6 +33,11 @@ export default function Footer() {
           </a>
         </div>
       </div>
+
+      <div className="footer__sponsor">
+        <div className="footer__sponsor-label">{t.madePossibleBy}</div>
+        <div className="footer__sponsor-name">FitStop Applecross</div>
+      </div>
     </footer>
   );
 }
