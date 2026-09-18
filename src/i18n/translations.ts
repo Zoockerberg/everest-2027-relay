@@ -8,9 +8,9 @@ export const FLAGS: Record<Lang, string> = {
 export interface Dict {
   causeLine: string;
   liveNow: string;
-  heroTitleLine1: string;
   heroTitleLine2: string;
   heroIntro: string;
+  raisedSoFar: string;
   startsIn: string;
   countdownUnits: string;
   donateNow: string;
@@ -59,10 +59,10 @@ export const translations: Record<Lang, Dict> = {
   en: {
     causeLine: "For Perth Children's Hospital Foundation",
     liveNow: "Live now",
-    heroTitleLine1: "100km",
     heroTitleLine2: "SkiErg Relay",
     heroIntro:
       "Every dollar donated helps WA's sick kids at Perth Children's Hospital — and pushes us further than 100km.",
+    raisedSoFar: "raised so far",
     startsIn: "Starts in",
     countdownUnits: "dd : hh : mm",
     donateNow: "Donate Now",
@@ -114,10 +114,10 @@ export const translations: Record<Lang, Dict> = {
   fr: {
     causeLine: "Au profit de la Perth Children's Hospital Foundation",
     liveNow: "En direct",
-    heroTitleLine1: "100km",
     heroTitleLine2: "Relais SkiErg",
     heroIntro:
       "Chaque dollar donné aide les enfants malades d'Australie-Occidentale à l'hôpital pour enfants de Perth — et nous pousse au-delà des 100 km.",
+    raisedSoFar: "récoltés à ce jour",
     startsIn: "Départ dans",
     countdownUnits: "jj : hh : mm",
     donateNow: "Faire un don",

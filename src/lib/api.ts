@@ -7,17 +7,27 @@ export interface RegistrationPayload {
   phone: string;
 }
 
+export interface EventData {
+  confirmed: Record<string, string[]>;
+  totalRaised: number;
+}
+
+const FALLBACK_EVENT_DATA: EventData = { confirmed: FALLBACK_CONFIRMED, totalRaised: 0 };
+
 // GET is a "simple" cross-origin request, so no CORS preflight is involved
 // and Apps Script's response is readable as-is.
-export async function fetchConfirmedSlots(): Promise<Record<string, string[]>> {
-  if (!APPS_SCRIPT_URL) return FALLBACK_CONFIRMED;
+export async function fetchEventData(): Promise<EventData> {
+  if (!APPS_SCRIPT_URL) return FALLBACK_EVENT_DATA;
   try {
     const res = await fetch(APPS_SCRIPT_URL, { method: "GET" });
-    if (!res.ok) return FALLBACK_CONFIRMED;
+    if (!res.ok) return FALLBACK_EVENT_DATA;
     const data = await res.json();
-    return data.confirmed ?? {};
+    return {
+      confirmed: data.confirmed ?? {},
+      totalRaised: typeof data.totalRaised === "number" ? data.totalRaised : 0,
+    };
   } catch {
-    return FALLBACK_CONFIRMED;
+    return FALLBACK_EVENT_DATA;
   }
 }
 

@@ -6,17 +6,20 @@ import LanguageSwitch from "./LanguageSwitch";
 import pchfLogo from "../assets/pchf-logo.png";
 import { EVENT_CONFIG } from "../config";
 import { useLanguage } from "../i18n/LanguageContext";
+import { distanceKmFromDonations, formatCurrency, formatDistanceKm } from "../lib/donation";
 
 interface HeroProps {
   onSkiClick: () => void;
+  totalRaised: number;
 }
 
-export default function Hero({ onSkiClick }: HeroProps) {
+export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
   const { back, mid, fore } = useParallax();
   const snowCanvasRef = useSnowCanvas();
   const countdown = useCountdown();
   const { isLive, liveNote, streamUrl, donateUrl } = EVENT_CONFIG;
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
+  const distanceKm = distanceKmFromDonations(totalRaised);
 
   return (
     <section className="hero">
@@ -65,7 +68,7 @@ export default function Hero({ onSkiClick }: HeroProps) {
           <div className="hero__cause">{t.causeLine}</div>
         </div>
         <div className="hero__header-right">
-          <div className="hero__project">Project Beyond Limits</div>
+          <div className="hero__project">{t.madePossibleBy} FitStop Applecross</div>
           <LanguageSwitch />
         </div>
       </header>
@@ -83,11 +86,17 @@ export default function Hero({ onSkiClick }: HeroProps) {
       <div className="hero__content">
         <div className="hero__column">
           <h1 className="hero__title">
-            {t.heroTitleLine1}
+            {formatDistanceKm(distanceKm, lang)}
             <br />
             {t.heroTitleLine2}
           </h1>
           <p className="hero__intro">{t.heroIntro}</p>
+
+          <div className="donation-live">
+            <span className="donation-live__dot" />
+            <span className="donation-live__amount">{formatCurrency(totalRaised, lang)}</span>
+            <span className="donation-live__label">{t.raisedSoFar}</span>
+          </div>
 
           <SkierScene />
 

@@ -35,3 +35,14 @@ export const FALLBACK_CONFIRMED: Record<string, string[]> = {};
 // README.md for setup steps).
 export const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwZ3NYx9eq6y-l6bVsruEEL8cUs9oNcAO_gIba3PnHZqKvgprb1WYtKrcp5146VVHeT/exec";
+
+// How the headline distance grows with donations: starts at BASE_DISTANCE_KM
+// and adds 1km per DOLLARS_PER_KM raised. Tune these two numbers to taste —
+// e.g. DOLLARS_PER_KM: 20 makes it climb 2.5x faster for the same donations.
+// Everything else (formatting, the live counter) recalculates automatically.
+export const BASE_DISTANCE_KM = 100;
+export const DOLLARS_PER_KM = 50;
+
+// How often the browser re-polls the backend for new donations/bookings
+// while someone has the page open (milliseconds).
+export const LIVE_POLL_INTERVAL_MS = 30_000;

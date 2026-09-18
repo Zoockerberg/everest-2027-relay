@@ -6,8 +6,8 @@ import JoinModal from "./components/JoinModal";
 import ThanksModal from "./components/ThanksModal";
 import Footer from "./components/Footer";
 import { parseSlotKey, selectionLabel } from "./lib/schedule";
-import { fetchConfirmedSlots, submitRegistration } from "./lib/api";
-import { FALLBACK_CONFIRMED } from "./config";
+import { fetchEventData, submitRegistration } from "./lib/api";
+import { FALLBACK_CONFIRMED, LIVE_POLL_INTERVAL_MS } from "./config";
 import { useLanguage } from "./i18n/LanguageContext";
 
 export default function App() {
@@ -15,6 +15,7 @@ export default function App() {
   const scheduleRef = useRef<HTMLElement>(null);
 
   const [confirmed, setConfirmed] = useState(FALLBACK_CONFIRMED);
+  const [totalRaised, setTotalRaised] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
@@ -24,7 +25,22 @@ export default function App() {
   const [submitError, setSubmitError] = useState(false);
 
   useEffect(() => {
-    fetchConfirmedSlots().then(setConfirmed);
+    let cancelled = false;
+    const load = () => {
+      fetchEventData().then((data) => {
+        if (cancelled) return;
+        setConfirmed(data.confirmed);
+        setTotalRaised(data.totalRaised);
+      });
+    };
+    load();
+    // Keeps the donation counter and schedule moving while someone has the
+    // page open, not just on reload — "live" without needing a websocket.
+    const id = setInterval(load, LIVE_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, []);
 
   const ready = !!selected && name.trim().length > 1 && phone.trim().length > 5;
@@ -65,7 +81,7 @@ export default function App() {
 
   return (
     <>
-      <Hero onSkiClick={scrollToSchedule} />
+      <Hero onSkiClick={scrollToSchedule} totalRaised={totalRaised} />
       <About />
       <Schedule ref={scheduleRef} selected={selected} onSlotClick={handleSlotClick} confirmed={confirmed} />
       <Footer />

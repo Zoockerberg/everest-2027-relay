@@ -226,6 +226,11 @@ button {
 .hero__ridge {
   position: absolute;
   will-change: transform;
+  /* Isolates this layer's oversized (>100%) box from the ancestor flex
+     centering math — same class of cross-browser quirk as .scene below,
+     triggered here by the combined overflow of all the absolutely
+     positioned hero layers rather than any single one. */
+  contain: layout;
 }
 .hero__ridge--back {
   left: -6%;
@@ -253,6 +258,7 @@ button {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  contain: layout;
 }
 
 .hero__scrim {
@@ -263,6 +269,7 @@ button {
   height: 30%;
   background: linear-gradient(to bottom, rgba(26, 19, 32, 0) 0%, rgba(26, 19, 32, 0.62) 62%, #1a1320 100%);
   pointer-events: none;
+  contain: layout;
 }
 
 .hero__header {
@@ -404,6 +411,36 @@ button {
   line-height: 1.4;
   color: var(--body);
   text-wrap: pretty;
+}
+
+.donation-live {
+  margin-top: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.donation-live__dot {
+  align-self: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dotblink 1.4s ease-in-out infinite;
+}
+.donation-live__amount {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  color: var(--cream-bright);
+}
+.donation-live__label {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  color: var(--muted-3);
 }
 
 /* ---------- Skier scene ---------- */
