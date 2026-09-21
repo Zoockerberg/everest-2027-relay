@@ -6,7 +6,7 @@ export const EVENT_CONFIG = {
   liveNote: "Hour 12 · 41.6km down",
   streamUrl: "https://www.youtube.com/",
   donateUrl:
-    "https://fundraisefor.pchf.org.au/fundraisers/francoisloose/everest-challenge",
+    "https://fundraisefor.pchf.org.au/fundraisers/francoisloose/everest-2027-project---100km-relay",
 };
 
 // Countdown target: 3 October 2026, 06:00 local time.
