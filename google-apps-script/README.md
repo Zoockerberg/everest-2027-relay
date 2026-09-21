@@ -76,10 +76,10 @@ donation webhook over to Funraisin's actual payload shape (see below).
    `config.ts`.
 4. Three tabs appear in your Sheet automatically the first time they're
    needed (either a GET from the site, or the first donation webhook call):
-   **`donation_total`** (the cached total the site reads), **`donations`**
-   (one row per donation, used to de-duplicate and re-sum), and
-   **`donations_log`** (a raw copy of every webhook call, for debugging —
-   see below). You don't need to create any of them yourself.
+   **`donation_total`** (the cached total the site reads), **`team_totals`**
+   (one row per Funraisin team/fundraiser page, used to de-duplicate and
+   re-sum), and **`donations_log`** (a raw copy of every webhook call, for
+   debugging). You don't need to create any of them yourself.
 
 **What changed:** the donation webhook no longer expects the charity's
 platform to send a running campaign total — see the next section for why.
@@ -87,15 +87,28 @@ platform to send a running campaign total — see the next section for why.
 ## Donation webhook — send this to the charity's IT contact
 
 **Why this isn't "send us the total":** Funraisin (the donation platform
-PCHF uses) has no field anywhere in its schema for a campaign's live
-cumulative total — the closest thing, "show progress", is just a checkbox
-for whether their own progress bar is displayed, not an actual number.
-What Funraisin *does* support is a webhook that fires once per individual
-donation, sending the full donation record as JSON (see
-[Funraisin's webhook docs](https://support.funraisin.co/developers/webhooks)
-and [data structure docs](https://support.funraisin.co/developers/data-structure)).
-So instead of asking their side to compute a running total, our endpoint
-now accepts one webhook per donation and does the summing itself.
+PCHF uses) has no field anywhere in its schema for a campaign-wide live
+cumulative total. What it does send, confirmed from a real test payload
+PCHF's Funraisin admin sent through on 2026-09-21, is one webhook call per
+individual donation, with a body shaped like:
+
+```json
+{
+  "Donation": { "donation_id": "15544", "d_amount": "1.00", "d_status": "paid", "..." : "..." },
+  "Event": { "event_id": "350", "event_code": "everest2027-skierg", "..." : "..." },
+  "Team": { "team_id": "237", "t_name": "...", "total_raised": "25.00", "..." : "..." }
+}
+```
+
+`Team.total_raised` turns out to be exactly the running-total field the
+original spec was looking for — it's just scoped to a team/fundraiser page
+rather than the whole campaign (multiple fundraiser pages now sit under the
+one event, per PCHF's re-configuration). So the endpoint reads
+`Team.team_id` + `Team.total_raised` off each call, keeps the latest total
+it's seen for each team, and sums across teams — rather than trying to
+re-total individual donation amounts itself (which would also mean
+correctly detecting declined/pending/refunded payments; `Team.total_raised`
+already accounts for those on Funraisin's side).
 
 **URL:** your Web app URL with `?type=donation` appended, e.g.
 ```
@@ -107,31 +120,20 @@ sends out of the box. In the Funraisin admin, set up a webhook pointed at
 the URL above with **Donation** as the data source; no custom payload
 shaping is needed on their end.
 
-**Retry safety:** each donation record has its own id, so the endpoint
-keeps a ledger keyed by that id — a retried or duplicated webhook delivery
-for the same donation just overwrites that donation's row instead of being
-counted twice. This replaces the old "send the running total, not an
-increment" trick, which no longer applies now that each call is a single
-donation rather than a total.
-
-**Field names — this may need one round of tuning:** Funraisin's public
-docs describe the donation record's *contents* but not exact field names
-precisely enough for us to hard-code with full confidence, so the script
-tries several plausible names for the donation id and amount (see
-`DONATION_ID_FIELDS_` / `DONATION_AMOUNT_FIELDS_` near the top of
-[`Code.gs`](./Code.gs)). Every webhook call — whether or not it parsed
-successfully — is logged to the **`donations_log`** tab with the raw JSON
-body in the `raw_body` column. After Alex sends a first test donation
-through:
-- If it shows up correctly in `donation_total`, you're done.
-- If not, open `donations_log`, look at the actual field names in
-  `raw_body`, and add the real ones to the front of the relevant array in
-  `Code.gs`, then redeploy (**Deploy → Manage deployments → edit → New
-  version → Deploy**).
+**Retry safety:** since each call carries the team's already-cumulative
+total rather than a single donation's amount, a retried or duplicated
+webhook delivery just overwrites that team's row with the same number —
+nothing gets double-counted.
 
 This is a plain server-to-server webhook call (not from a browser), so
 their system doesn't need to worry about CORS or content-type — any JSON
 POST works.
+
+**If totals ever stop updating:** every webhook call — whether it parsed
+successfully or not — is logged to the **`donations_log`** tab with the
+full raw JSON body in the `raw_body` column. If Funraisin changes their
+payload shape in the future, that's the place to look, and the fix is a
+one-line change in `handleDonationWebhook_` in [`Code.gs`](./Code.gs).
 
 **On the site:** the hero heading's distance follows a tiered curve —
 front-loaded early on, tapering as donations grow, then a flat permanent
@@ -145,16 +147,17 @@ A small "$X raised so far" line also appears under the intro paragraph.
 Both update automatically within `LIVE_POLL_INTERVAL_MS` (30s) of a visitor
 having the page open, no reload needed.
 
-**Testing it yourself before Funraisin is wired up:**
+**Testing it yourself:**
 ```bash
 curl -X POST "https://script.google.com/macros/s/AKfycb.../exec?type=donation" \
   -H "Content-Type: application/json" \
-  -d '{"donation_id": "test-1", "amount": 1000}'
+  -d '{"Team": {"team_id": "237", "t_name": "Test team", "total_raised": "1000"}}'
 ```
 Then reload the site (or wait 30s) — the heading should jump to 190km
-(the end of the first tier). Send a second call with a different
-`donation_id` to confirm amounts add up, and re-send the same `donation_id`
-again to confirm it doesn't double-count.
+(the end of the first tier). Send a second call with a different `team_id`
+to confirm totals from multiple teams add up, and re-send the same
+`team_id` with the same `total_raised` again to confirm it doesn't
+double-count.
 
 ## Using it day to day
 
