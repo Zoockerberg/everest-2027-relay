@@ -65,8 +65,8 @@ npx gh-pages -d dist -m "Wire up booking backend"
 ## Updating an existing deployment
 
 If you already went through steps 1–4 before, you need to update **again**
-even if you did it already for donations — this version also fixes a real
-bug (see below):
+even if you did it already for donations — this version switches the
+donation webhook over to Funraisin's actual payload shape (see below).
 
 1. Open your Sheet → **Extensions → Apps Script**.
 2. Select all the existing code and replace it with the current
@@ -74,46 +74,64 @@ bug (see below):
 3. Save, then **Deploy → Manage deployments → edit (pencil icon) → New
    version → Deploy**. The Web app URL stays the same — nothing to change in
    `config.ts`.
-4. A new **`donation_total`** tab appears in your Sheet automatically the
-   first time the script runs (either GET from the site, or the first
-   donation webhook call) — you don't need to create it yourself.
+4. Three tabs appear in your Sheet automatically the first time they're
+   needed (either a GET from the site, or the first donation webhook call):
+   **`donation_total`** (the cached total the site reads), **`donations`**
+   (one row per donation, used to de-duplicate and re-sum), and
+   **`donations_log`** (a raw copy of every webhook call, for debugging —
+   see below). You don't need to create any of them yourself.
 
-**What was fixed:** a confirmed row's name not appearing on the site. When
-Sheets auto-converts a typed date/time like `2026-10-03` or `06:00` into a
-real date/time cell (which it does by default), the previous code's check
-for "is this a date cell?" could fail to recognize it, producing a garbled
-key that never matched anything the site was looking for — so the row
-stayed invisible even though `status` was correctly set to `confirmed`. No
-data was lost; any row you'd already confirmed will start showing up as
-soon as you redeploy, nothing needs to be re-entered.
+**What changed:** the donation webhook no longer expects the charity's
+platform to send a running campaign total — see the next section for why.
 
 ## Donation webhook — send this to the charity's IT contact
 
-Give them this URL and payload spec so their donation platform can push
-updates to the site:
+**Why this isn't "send us the total":** Funraisin (the donation platform
+PCHF uses) has no field anywhere in its schema for a campaign's live
+cumulative total — the closest thing, "show progress", is just a checkbox
+for whether their own progress bar is displayed, not an actual number.
+What Funraisin *does* support is a webhook that fires once per individual
+donation, sending the full donation record as JSON (see
+[Funraisin's webhook docs](https://support.funraisin.co/developers/webhooks)
+and [data structure docs](https://support.funraisin.co/developers/data-structure)).
+So instead of asking their side to compute a running total, our endpoint
+now accepts one webhook per donation and does the summing itself.
 
 **URL:** your Web app URL with `?type=donation` appended, e.g.
 ```
 https://script.google.com/macros/s/AKfycb.../exec?type=donation
 ```
 
-**Method:** `POST`, JSON body:
-```json
-{ "totalRaised": 1234.56 }
-```
+**Method:** `POST` — this is exactly what Funraisin's own donation webhook
+sends out of the box. In the Funraisin admin, set up a webhook pointed at
+the URL above with **Donation** as the data source; no custom payload
+shaping is needed on their end.
 
-**Important — `totalRaised` must be the campaign's current cumulative total**
-(in dollars), not the amount of the individual donation that just came in.
-Sending the running total rather than an increment means it doesn't matter
-if their system retries a webhook delivery or sends it twice — each call
-just overwrites the stored number with the latest total, so nothing gets
-double-counted. If their platform only exposes a live "total raised so far"
-figure somewhere (e.g. next to their own donation progress bar), that's
-exactly the number to send here.
+**Retry safety:** each donation record has its own id, so the endpoint
+keeps a ledger keyed by that id — a retried or duplicated webhook delivery
+for the same donation just overwrites that donation's row instead of being
+counted twice. This replaces the old "send the running total, not an
+increment" trick, which no longer applies now that each call is a single
+donation rather than a total.
 
-This is a plain server-to-server webhook call (not from a browser), so their
-system doesn't need to worry about CORS or content-type — any JSON POST
-works.
+**Field names — this may need one round of tuning:** Funraisin's public
+docs describe the donation record's *contents* but not exact field names
+precisely enough for us to hard-code with full confidence, so the script
+tries several plausible names for the donation id and amount (see
+`DONATION_ID_FIELDS_` / `DONATION_AMOUNT_FIELDS_` near the top of
+[`Code.gs`](./Code.gs)). Every webhook call — whether or not it parsed
+successfully — is logged to the **`donations_log`** tab with the raw JSON
+body in the `raw_body` column. After Alex sends a first test donation
+through:
+- If it shows up correctly in `donation_total`, you're done.
+- If not, open `donations_log`, look at the actual field names in
+  `raw_body`, and add the real ones to the front of the relevant array in
+  `Code.gs`, then redeploy (**Deploy → Manage deployments → edit → New
+  version → Deploy**).
+
+This is a plain server-to-server webhook call (not from a browser), so
+their system doesn't need to worry about CORS or content-type — any JSON
+POST works.
 
 **On the site:** the hero heading's distance follows a tiered curve —
 front-loaded early on, tapering as donations grow, then a flat permanent
@@ -127,14 +145,16 @@ A small "$X raised so far" line also appears under the intro paragraph.
 Both update automatically within `LIVE_POLL_INTERVAL_MS` (30s) of a visitor
 having the page open, no reload needed.
 
-**Testing it yourself before the IT guy wires it up:**
+**Testing it yourself before Funraisin is wired up:**
 ```bash
 curl -X POST "https://script.google.com/macros/s/AKfycb.../exec?type=donation" \
   -H "Content-Type: application/json" \
-  -d '{"totalRaised": 1000}'
+  -d '{"donation_id": "test-1", "amount": 1000}'
 ```
 Then reload the site (or wait 30s) — the heading should jump to 190km
-(the end of the first tier).
+(the end of the first tier). Send a second call with a different
+`donation_id` to confirm amounts add up, and re-send the same `donation_id`
+again to confirm it doesn't double-count.
 
 ## Using it day to day
 
