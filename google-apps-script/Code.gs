@@ -4,9 +4,10 @@
 // header row: date | start_time | name | phone | status | submitted_at
 // (see google-apps-script/README.md for full setup steps). The donation
 // total is tracked in a "donation_total" tab (cached sum, for fast reads)
-// backed by a "donations" ledger tab (one row per donation, for dedup and
-// re-summing) and a "donations_log" tab (raw payload audit trail) — all
-// three are created automatically the first time they're needed.
+// backed by a "team_totals" tab (one row per Funraisin team/fundraiser, for
+// dedup and re-summing) and a "donations_log" tab (raw payload audit
+// trail) — all three are created automatically the first time they're
+// needed.
 //
 // Registration columns are addressed by position, not by header name, so
 // the header row is for humans only — don't reorder them without updating
@@ -14,7 +15,7 @@
 
 const SHEET_NAME = "registrations";
 const DONATION_SHEET_NAME = "donation_total";
-const DONATIONS_LEDGER_SHEET_NAME = "donations";
+const TEAM_TOTALS_SHEET_NAME = "team_totals";
 const DONATIONS_LOG_SHEET_NAME = "donations_log";
 
 const COL_DATE = 0;
@@ -53,32 +54,33 @@ function setTotalRaised_(value) {
   getDonationSheet_().getRange("B1").setValue(value);
 }
 
-// One row per donation: donation_id | amount | received_at. Used both to
-// de-duplicate retried/duplicated webhook deliveries (upsert by donation
-// id, rather than blindly appending) and as the source of truth the cached
-// total in "donation_total" is re-summed from.
-function getDonationsLedgerSheet_() {
+// One row per Funraisin team/fundraiser page: team_id | team_name |
+// total_raised | last_updated. Funraisin's donation webhook doesn't carry
+// a campaign-wide running total, but it does carry a per-team one (see the
+// comment above handleDonationWebhook_ below) — this is our record of the
+// latest total_raised reported for each team, which both de-duplicates
+// retried webhook deliveries (same team id just overwrites the same row)
+// and is what the cached total in "donation_total" is re-summed from.
+function getTeamTotalsSheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(DONATIONS_LEDGER_SHEET_NAME);
+  let sheet = ss.getSheetByName(TEAM_TOTALS_SHEET_NAME);
   if (!sheet) {
-    sheet = ss.insertSheet(DONATIONS_LEDGER_SHEET_NAME);
-    sheet.appendRow(["donation_id", "amount", "received_at"]);
+    sheet = ss.insertSheet(TEAM_TOTALS_SHEET_NAME);
+    sheet.appendRow(["team_id", "team_name", "total_raised", "last_updated"]);
   }
   return sheet;
 }
 
 // Raw audit trail: every donation webhook call gets a row here, whether or
-// not it parsed successfully. Funraisin's exact field names aren't
-// something we control or have been able to confirm in advance (see the
-// donation webhook section of google-apps-script/README.md), so if
-// donations stop showing up, check here first — the "raw_body" column has
-// the actual payload Funraisin sent.
+// not it parsed successfully — handy if Funraisin ever changes their
+// payload shape and totals stop updating; the "raw_body" column has the
+// actual payload they sent.
 function getDonationsLogSheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(DONATIONS_LOG_SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(DONATIONS_LOG_SHEET_NAME);
-    sheet.appendRow(["received_at", "donation_id", "amount", "skipped_reason", "raw_body"]);
+    sheet.appendRow(["received_at", "donation_id", "team_id", "team_total_raised", "raw_body"]);
   }
   return sheet;
 }
@@ -138,91 +140,23 @@ function doPost(e) {
   return handleBookingSubmission_(e);
 }
 
-// Funraisin's donation platform has no concept of "campaign running total"
-// we can subscribe to — the closest thing, "show progress", is just a
-// display toggle, not a number. What it *does* send is one webhook per
-// individual donation, firing "the entire Donation record" as JSON (see
-// support.funraisin.co/developers/webhooks and .../data-structure). So
-// instead of trusting the caller for a running total, we keep our own
-// ledger of donations (by donation id) and sum it ourselves — which also
-// restores the retry-safety the old "send the running total" contract used
-// to give us for free: a retried/duplicated delivery for the same donation
-// id just overwrites that donation's own ledger row instead of adding a
-// second one.
-//
-// Funraisin's exact field names for the donation id and amount aren't
-// documented in enough detail to hard-code with confidence, so this tries
-// a short list of plausible names (below) and logs every raw payload to
-// the "donations_log" sheet regardless of outcome. If donations aren't
-// being picked up, check that sheet's "raw_body" column for the real field
-// names Funraisin is sending and add them to the front of the lists below.
-const DONATION_ID_FIELDS_ = ["donation_id", "id", "donationId", "transaction_id"];
-const DONATION_AMOUNT_FIELDS_ = [
-  "amount",
-  "donation_amount",
-  "gross_amount",
-  "donationAmount",
-  "amount_raised",
-  "value",
-  "total",
-];
-const DONATION_STATUS_FIELDS_ = ["status", "donation_status", "payment_status"];
-// A donation record that names its own status should only be counted if
-// that status looks like success — skip anything that looks declined,
-// pending, refunded, etc. so a would-be donation doesn't inflate the total.
-const DONATION_BAD_STATUS_SUBSTRINGS_ = ["fail", "declin", "pending", "refund", "cancel", "void"];
-
-function firstField_(obj, names) {
-  if (!obj) return undefined;
-  for (const name of names) {
-    const value = obj[name];
-    if (value !== undefined && value !== null && value !== "") return value;
-  }
-  return undefined;
-}
-
-function isBadDonationStatus_(donation) {
-  const status = firstField_(donation, DONATION_STATUS_FIELDS_);
-  if (status === undefined) return false;
-  const normalized = String(status).toLowerCase();
-  return DONATION_BAD_STATUS_SUBSTRINGS_.some((bad) => normalized.indexOf(bad) !== -1);
-}
-
-function logDonationWebhook_(donationId, amount, skippedReason, rawBody) {
-  getDonationsLogSheet_().appendRow([new Date(), donationId, amount, skippedReason || "", rawBody]);
-}
-
-// Upserts by donation id (overwrites the existing row if the id was seen
-// before) rather than always appending, so a retried webhook delivery for
-// the same donation can't be double-counted.
-function upsertDonation_(donationId, amount) {
-  const sheet = getDonationsLedgerSheet_();
-  const lastRow = sheet.getLastRow();
-  if (lastRow > 1) {
-    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-    for (let i = 0; i < ids.length; i++) {
-      if (String(ids[i][0]) === donationId) {
-        sheet.getRange(i + 2, 2, 1, 2).setValues([[amount, new Date()]]);
-        return;
-      }
-    }
-  }
-  sheet.appendRow([donationId, amount, new Date()]);
-}
-
-function recomputeTotalRaised_() {
-  const sheet = getDonationsLedgerSheet_();
-  const lastRow = sheet.getLastRow();
-  const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, 2).getValues() : [];
-  const total = rows.reduce((sum, row) => sum + (Number(row[1]) || 0), 0);
-  setTotalRaised_(total);
-  return total;
-}
-
 // Webhook contract — Funraisin POSTs to `<web app url>?type=donation` once
-// per donation, with the donation record as the JSON body (either bare, or
-// wrapped in a `{ "donation": {...} }` / `{ "data": {...} }` envelope,
-// which is unwrapped below — whichever it turns out to be).
+// per donation. Confirmed from a real test payload sent by PCHF's Funraisin
+// admin (Alex, 2026-09-21): the body is
+//   { "Donation": {...}, "Event": {...}, "Team": {...} }
+// There's no campaign-wide running total anywhere in that payload, but
+// Team.total_raised IS a running total — Funraisin's own cumulative sum of
+// everything donated to that team/fundraiser page so far. That's exactly
+// the "send the running total, not an increment" contract the original
+// spec asked for, just scoped per team rather than per campaign (multiple
+// fundraiser pages now sit under the one event). So rather than re-summing
+// individual donation amounts ourselves — which would mean reliably
+// detecting declined/pending/refunded payments too — we keep a ledger of
+// the latest total_raised Funraisin reported per team and sum across
+// teams. A retried/duplicated delivery for the same team just overwrites
+// that team's row with the same number (no double-counting), and a refund
+// is reflected automatically the next time Funraisin calls in with that
+// team's updated (lower) total.
 function handleDonationWebhook_(e) {
   let body;
   try {
@@ -231,39 +165,65 @@ function handleDonationWebhook_(e) {
     return jsonOutput_({ ok: false, error: "Invalid JSON body" });
   }
 
-  const donation =
-    body && typeof body.donation === "object"
-      ? body.donation
-      : body && typeof body.data === "object"
-        ? body.data
-        : body;
+  const team = body && body.Team;
+  const donation = body && body.Donation;
+  const teamId = team && team.team_id !== undefined ? String(team.team_id) : "";
+  const teamTotal = team ? Number(team.total_raised) : NaN;
 
-  const rawId = firstField_(donation, DONATION_ID_FIELDS_);
-  const donationId = rawId !== undefined ? String(rawId) : "";
-  const amount = Number(firstField_(donation, DONATION_AMOUNT_FIELDS_));
-  const skippedReason = isBadDonationStatus_(donation) ? "non-success status" : "";
+  logDonationWebhook_(
+    donation && donation.donation_id,
+    teamId,
+    isFinite(teamTotal) ? teamTotal : null,
+    e.postData.contents
+  );
 
-  logDonationWebhook_(donationId, isFinite(amount) ? amount : null, skippedReason, e.postData.contents);
-
-  if (!donationId) {
+  if (!teamId) {
     return jsonOutput_({
       ok: false,
-      error: "Could not find a donation id field — see the donations_log sheet's raw_body column",
+      error: "Could not find Team.team_id in the payload — see the donations_log sheet's raw_body column",
     });
   }
-  if (!isFinite(amount) || amount < 0) {
+  if (!isFinite(teamTotal) || teamTotal < 0) {
     return jsonOutput_({
       ok: false,
-      error: "Could not find a valid donation amount field — see the donations_log sheet's raw_body column",
+      error: "Could not find a valid Team.total_raised in the payload — see the donations_log sheet's raw_body column",
     });
   }
-  if (skippedReason) {
-    return jsonOutput_({ ok: true, skipped: true, reason: skippedReason, donationId: donationId });
-  }
 
-  upsertDonation_(donationId, amount);
+  upsertTeamTotal_(teamId, (team && team.t_name) || "", teamTotal);
   const total = recomputeTotalRaised_();
-  return jsonOutput_({ ok: true, donationId: donationId, amount: amount, totalRaised: total });
+  return jsonOutput_({ ok: true, teamId: teamId, teamTotalRaised: teamTotal, totalRaised: total });
+}
+
+function logDonationWebhook_(donationId, teamId, teamTotal, rawBody) {
+  getDonationsLogSheet_().appendRow([new Date(), donationId || "", teamId || "", teamTotal, rawBody]);
+}
+
+// Upserts by team id (overwrites the existing row if the id was seen
+// before) rather than always appending, so a retried webhook delivery for
+// the same team can't be double-counted.
+function upsertTeamTotal_(teamId, teamName, totalRaised) {
+  const sheet = getTeamTotalsSheet_();
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]) === teamId) {
+        sheet.getRange(i + 2, 2, 1, 3).setValues([[teamName, totalRaised, new Date()]]);
+        return;
+      }
+    }
+  }
+  sheet.appendRow([teamId, teamName, totalRaised, new Date()]);
+}
+
+function recomputeTotalRaised_() {
+  const sheet = getTeamTotalsSheet_();
+  const lastRow = sheet.getLastRow();
+  const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, 3).getValues() : [];
+  const total = rows.reduce((sum, row) => sum + (Number(row[2]) || 0), 0);
+  setTotalRaised_(total);
+  return total;
 }
 
 // Body (sent as text/plain to dodge the CORS preflight — see src/lib/api.ts):
