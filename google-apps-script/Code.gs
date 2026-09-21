@@ -4,10 +4,11 @@
 // header row: date | start_time | name | phone | status | submitted_at
 // (see google-apps-script/README.md for full setup steps). The donation
 // total is tracked in a "donation_total" tab (cached sum, for fast reads)
-// backed by a "team_totals" tab (one row per Funraisin team/fundraiser, for
-// dedup and re-summing) and a "donations_log" tab (raw payload audit
-// trail) — all three are created automatically the first time they're
-// needed.
+// backed by a "team_totals" tab (one row per accepted Funraisin
+// team/fundraiser — see TARGET_TEAM_IDS_ below — for dedup and re-summing)
+// and a "donations_log" tab (raw payload audit trail, including donations
+// to OTHER teams that got filtered out) — all three are created
+// automatically the first time they're needed.
 //
 // Registration columns are addressed by position, not by header name, so
 // the header row is for humans only — don't reorder them without updating
@@ -54,13 +55,14 @@ function setTotalRaised_(value) {
   getDonationSheet_().getRange("B1").setValue(value);
 }
 
-// One row per Funraisin team/fundraiser page: team_id | team_name |
-// total_raised | last_updated. Funraisin's donation webhook doesn't carry
-// a campaign-wide running total, but it does carry a per-team one (see the
-// comment above handleDonationWebhook_ below) — this is our record of the
-// latest total_raised reported for each team, which both de-duplicates
-// retried webhook deliveries (same team id just overwrites the same row)
-// and is what the cached total in "donation_total" is re-summed from.
+// One row per accepted Funraisin team/fundraiser page: team_id | team_name
+// | total_raised | last_updated. Funraisin's donation webhook doesn't
+// carry a campaign-wide running total, but it does carry a per-team one
+// (see the comment above handleDonationWebhook_ below) — this is our
+// record of the latest total_raised reported for each accepted team,
+// which both de-duplicates retried webhook deliveries (same team id just
+// overwrites the same row) and is what the cached total in
+// "donation_total" is re-summed from.
 function getTeamTotalsSheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(TEAM_TOTALS_SHEET_NAME);
@@ -72,9 +74,9 @@ function getTeamTotalsSheet_() {
 }
 
 // Raw audit trail: every donation webhook call gets a row here, whether or
-// not it parsed successfully — handy if Funraisin ever changes their
-// payload shape and totals stop updating; the "raw_body" column has the
-// actual payload they sent.
+// not it parsed successfully, and whether or not its team was one we
+// accept — handy if Funraisin ever changes their payload shape and totals
+// stop updating; the "raw_body" column has the actual payload they sent.
 function getDonationsLogSheet_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(DONATIONS_LOG_SHEET_NAME);
@@ -140,6 +142,16 @@ function doPost(e) {
   return handleBookingSubmission_(e);
 }
 
+// Only donations to these Funraisin team/fundraiser pages count toward the
+// site's total. Funraisin fires this same webhook for every team under the
+// event (see google-apps-script/README.md), not just this one, since
+// multiple fundraiser pages now sit under it — so without this filter,
+// donations to unrelated fundraisers on the same event would inflate the
+// number on the site.
+//   237 = "Everest 2027 Project - Beyond Limits" (confirmed via the
+//   Team.team_id in the 2026-09-21 test payload).
+const TARGET_TEAM_IDS_ = ["237"];
+
 // Webhook contract — Funraisin POSTs to `<web app url>?type=donation` once
 // per donation. Confirmed from a real test payload sent by PCHF's Funraisin
 // admin (Alex, 2026-09-21): the body is
@@ -148,15 +160,15 @@ function doPost(e) {
 // Team.total_raised IS a running total — Funraisin's own cumulative sum of
 // everything donated to that team/fundraiser page so far. That's exactly
 // the "send the running total, not an increment" contract the original
-// spec asked for, just scoped per team rather than per campaign (multiple
-// fundraiser pages now sit under the one event). So rather than re-summing
-// individual donation amounts ourselves — which would mean reliably
-// detecting declined/pending/refunded payments too — we keep a ledger of
-// the latest total_raised Funraisin reported per team and sum across
-// teams. A retried/duplicated delivery for the same team just overwrites
-// that team's row with the same number (no double-counting), and a refund
-// is reflected automatically the next time Funraisin calls in with that
-// team's updated (lower) total.
+// spec asked for, just scoped per team rather than per campaign. So rather
+// than re-summing individual donation amounts ourselves — which would mean
+// reliably detecting declined/pending/refunded payments too — we keep a
+// ledger of the latest total_raised Funraisin reported per accepted team
+// (see TARGET_TEAM_IDS_ above) and sum across them. A retried/duplicated
+// delivery for the same team just overwrites that team's row with the
+// same number (no double-counting), and a refund is reflected
+// automatically the next time Funraisin calls in with that team's
+// updated (lower) total.
 function handleDonationWebhook_(e) {
   let body;
   try {
@@ -182,6 +194,9 @@ function handleDonationWebhook_(e) {
       ok: false,
       error: "Could not find Team.team_id in the payload — see the donations_log sheet's raw_body column",
     });
+  }
+  if (TARGET_TEAM_IDS_.indexOf(teamId) === -1) {
+    return jsonOutput_({ ok: true, skipped: true, reason: "donation was to a different team/fundraiser page", teamId: teamId });
   }
   if (!isFinite(teamTotal) || teamTotal < 0) {
     return jsonOutput_({
