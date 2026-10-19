@@ -9,8 +9,8 @@ export const EVENT_CONFIG = {
     "https://fundraisefor.pchf.org.au/fundraisers/francoisloose/everest-2027-project---100km-relay",
 };
 
-// Countdown target: 3 October 2026, 06:00 local time.
-export const EVENT_START = new Date(2026, 9, 3, 6, 0, 0).getTime();
+// Countdown target: 14 November 2026, 06:00 local time.
+export const EVENT_START = new Date(2026, 10, 14, 6, 0, 0).getTime();
 
 export interface DayConfig {
   date: string; // "YYYY-MM-DD"
@@ -22,8 +22,8 @@ export interface DayConfig {
 // narrows before the core team's own stretch later in the morning. Day
 // labels are generated per-language in lib/schedule.ts, not stored here.
 export const DAYS_CONFIG: DayConfig[] = [
-  { date: "2026-10-03", startHour: 6, count: 14 },
-  { date: "2026-10-04", startHour: 3, count: 7 },
+  { date: "2026-11-14", startHour: 6, count: 14 },
+  { date: "2026-11-15", startHour: 3, count: 7 },
 ];
 
 // Fallback confirmed-registrations map, keyed by "YYYY-MM-DD HH:00" — used
