@@ -3,7 +3,7 @@
 **Live:** https://zoockerberg.github.io/everest-2027-relay/
 (repo: https://github.com/Zoockerberg/everest-2027-relay)
 
-Public event landing page for a charity SkiErg relay (3–4 Oct 2026) raising
+Public event landing page for a charity SkiErg relay (14–15 Nov 2026) raising
 money for Perth Children's Hospital Foundation. Recreated from the design
 handoff at `Claude Cowork/design_handoff_everest_relay/` (React + TypeScript +
 Vite, plain CSS matching the handoff's design tokens).
