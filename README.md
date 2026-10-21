@@ -1,7 +1,6 @@
 # Everest 2027 — 100km SkiErg Relay
 
-**Live:** see [Deploying](#deploying) — moving from GitHub Pages to Netlify so
-the URL doesn't expose a personal GitHub handle.
+**Live:** https://everest2027-skierg-challenge.netlify.app
 (repo: https://github.com/Zoockerberg/everest-2027-relay)
 
 Public event landing page for a charity SkiErg relay (14–15 Nov 2026) raising
