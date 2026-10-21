@@ -7,7 +7,7 @@ import ThanksModal from "./components/ThanksModal";
 import Footer from "./components/Footer";
 import { parseSlotKey, selectionLabel } from "./lib/schedule";
 import { fetchEventData, submitRegistration } from "./lib/api";
-import { FALLBACK_CONFIRMED, LIVE_POLL_INTERVAL_MS } from "./config";
+import { FALLBACK_CONFIRMED, LIVE_POLL_INTERVAL_MS, REGISTRATION_OPEN } from "./config";
 import { useLanguage } from "./i18n/LanguageContext";
 
 export default function App() {
@@ -83,10 +83,12 @@ export default function App() {
     <>
       <Hero onSkiClick={scrollToSchedule} totalRaised={totalRaised} />
       <About />
-      <Schedule ref={scheduleRef} selected={selected} onSlotClick={handleSlotClick} confirmed={confirmed} />
+      {REGISTRATION_OPEN && (
+        <Schedule ref={scheduleRef} selected={selected} onSlotClick={handleSlotClick} confirmed={confirmed} />
+      )}
       <Footer />
 
-      {modalOpen && !submitted && selected && (
+      {REGISTRATION_OPEN && modalOpen && !submitted && selected && (
         <JoinModal
           selectionLabel={selectionLabel(selected, lang, t)}
           name={name}
@@ -101,7 +103,7 @@ export default function App() {
         />
       )}
 
-      {submitted && <ThanksModal submittedKey={submitted} onDone={() => setSubmitted(null)} />}
+      {REGISTRATION_OPEN && submitted && <ThanksModal submittedKey={submitted} onDone={() => setSubmitted(null)} />}
     </>
   );
 }
