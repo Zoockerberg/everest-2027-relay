@@ -4,7 +4,7 @@ import { useCountdown } from "../hooks/useCountdown";
 import SkierScene from "./SkierScene";
 import LanguageSwitch from "./LanguageSwitch";
 import pchfLogo from "../assets/pchf-logo.png";
-import { EVENT_CONFIG } from "../config";
+import { EVENT_CONFIG, REGISTRATION_OPEN } from "../config";
 import { useLanguage } from "../i18n/LanguageContext";
 import { distanceKmFromDonations, formatCurrency, formatDistanceKm } from "../lib/donation";
 
@@ -130,9 +130,11 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
               >
                 {t.watchLive}
               </a>
-              <button onClick={onSkiClick} className="btn btn--secondary">
-                {t.iWantToSki}
-              </button>
+              {REGISTRATION_OPEN && (
+                <button onClick={onSkiClick} className="btn btn--secondary">
+                  {t.iWantToSki}
+                </button>
+              )}
             </div>
           </div>
 
