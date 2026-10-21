@@ -9,6 +9,14 @@ export const EVENT_CONFIG = {
     "https://fundraisefor.pchf.org.au/fundraisers/francoisloose/everest-2027-project---100km-relay",
 };
 
+// Set to false to hide the "I want to Ski!" button and the registration
+// schedule section entirely — used while registration is invite-only
+// (spots shared via a separate private link) rather than open to anyone
+// who finds the site. The booking backend keeps working either way; this
+// only hides the public entry points into it. Flip back to true to reopen
+// public registration.
+export const REGISTRATION_OPEN = false;
+
 // Countdown target: 14 November 2026, 06:00 local time.
 export const EVENT_START = new Date(2026, 10, 14, 6, 0, 0).getTime();
 
