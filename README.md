@@ -1,6 +1,6 @@
 # Everest 2027 — 100km SkiErg Relay
 
-**Live:** https://everest2027-skierg-challenge.netlify.app
+**Live:** https://everest-2027-relay.vercel.app
 (repo: https://github.com/Zoockerberg/everest-2027-relay)
 
 Public event landing page for a charity SkiErg relay (14–15 Nov 2026) raising
@@ -53,42 +53,6 @@ src/
 
 ## Deploying
 
-**Hosted on Netlify** (free, no domain purchase needed, and the default URL
-doesn't expose a personal GitHub account name the way GitHub Pages' does).
-One-time setup, needs your own Netlify account — this is a web login/connect
-flow I can't complete for you:
+Hosted on Vercel (connected to this repo). Push to `main` to trigger a deploy automatically.
 
-1. Go to [app.netlify.com](https://app.netlify.com) and sign up/log in
-   (GitHub login is the easiest option).
-2. **Add new site → Import an existing project → Deploy with GitHub** →
-   authorize Netlify to access your GitHub account → pick the
-   `everest-2027-relay` repo.
-3. Netlify reads [`netlify.toml`](./netlify.toml) in this repo and
-   auto-fills the build command (`npm run build`) and publish directory
-   (`dist`) — just click **Deploy**.
-4. Once it's live, go to **Site configuration → Domain management → Options
-   → Edit site name** to pick a custom subdomain, e.g.
-   `everest2027-skierg.netlify.app`, instead of the random one Netlify
-   generates.
-5. From then on, every push to the repo's default branch auto-deploys —
-   no more manual `gh-pages` step needed.
-
-`vite.config.ts` was updated to serve from the host root (`base: '/'`)
-rather than a GitHub Pages project subpath — if you ever go back to GitHub
-Pages instead, that'll need to change back to `/everest-2027-relay/`.
-
-<details>
-<summary>Previous setup: GitHub Pages (kept for reference, no longer the
-primary deploy target)</summary>
-
-Was served from the `gh-pages` branch via:
-
-```bash
-npm run build
-npx gh-pages -d dist -m "Deploy update"
-```
-
-This still works technically, but the asset paths now assume root serving
-(see above), so it would need `base` reverted to deploy there again.
-
-</details>
+For a plain static build: `npm run build` outputs to `dist/`.
