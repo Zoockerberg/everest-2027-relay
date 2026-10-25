@@ -50,20 +50,20 @@ export interface DistanceBreakpoint {
 }
 
 // How the headline distance grows with donations: front-loaded and
-// tapering, then a flat permanent rate past $10,000 so large late donations
+// tapering, then a flat permanent rate past $5,000 so large late donations
 // still visibly move the number. Distance is interpolated linearly between
 // consecutive points; past the last point it grows at DOLLARS_PER_KM_BEYOND
 // forever (no cap). Edit these two exports to retune the curve — everything
 // else (formatting, the live counter) recalculates automatically.
 export const DISTANCE_CURVE: DistanceBreakpoint[] = [
   { dollars: 0, km: 100 }, // base target
-  { dollars: 1_000, km: 190 }, // +90km, ~$11.10/km
-  { dollars: 2_500, km: 245 }, // +55km, ~$27.30/km
-  { dollars: 4_500, km: 290 }, // +45km, ~$44.40/km
-  { dollars: 7_000, km: 325 }, // +35km, ~$71.40/km
-  { dollars: 10_000, km: 350 }, // +25km, $120/km
+  { dollars: 500, km: 190 }, // +90km, ~$5.55/km
+  { dollars: 1_250, km: 245 }, // +55km, ~$22.70/km
+  { dollars: 2_250, km: 290 }, // +45km, ~$22.20/km
+  { dollars: 3_500, km: 325 }, // +35km, ~$35.70/km
+  { dollars: 5_000, km: 350 }, // +25km, $60/km
 ];
-export const DOLLARS_PER_KM_BEYOND = 120; // $10,000+: +1km per $120, uncapped
+export const DOLLARS_PER_KM_BEYOND = 60; // $5,000+: +1km per $60, uncapped
 
 // How often the browser re-polls the backend for new donations/bookings
 // while someone has the page open (milliseconds).
