@@ -4,7 +4,7 @@ import { useCountdown } from "../hooks/useCountdown";
 import SkierScene from "./SkierScene";
 import LanguageSwitch from "./LanguageSwitch";
 import pchfLogo from "../assets/pchf-logo.png";
-import { EVENT_CONFIG, REGISTRATION_OPEN } from "../config";
+import { DISTANCE_CURVE, EVENT_CONFIG, REGISTRATION_OPEN } from "../config";
 import { useLanguage } from "../i18n/LanguageContext";
 import { distanceKmFromDonations, formatCurrency, formatDistanceKm } from "../lib/donation";
 
@@ -20,6 +20,8 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
   const { isLive, liveNote, streamUrl, donateUrl } = EVENT_CONFIG;
   const { lang, t } = useLanguage();
   const distanceKm = distanceKmFromDonations(totalRaised);
+  // Rounded separately so base + bonus always adds up to the total shown.
+  const bonusKm = Math.round(distanceKm) - DISTANCE_CURVE[0].km;
 
   return (
     <section className="hero">
@@ -93,9 +95,23 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
           <p className="hero__intro">{t.heroIntro}</p>
 
           <div className="donation-live">
-            <span className="donation-live__dot" />
-            <span className="donation-live__amount">{formatCurrency(totalRaised, lang)}</span>
-            <span className="donation-live__label">{t.raisedSoFar}</span>
+            <div className="donation-live__stat">
+              <span className="donation-live__amount">
+                <span className="donation-live__dot" />
+                {formatCurrency(totalRaised, lang)}
+              </span>
+              <span className="donation-live__label">{t.raisedSoFar}</span>
+            </div>
+            <div className="donation-live__stat">
+              <span className="donation-live__amount">+{formatDistanceKm(bonusKm, lang)}</span>
+              <span className="donation-live__label">{t.extraKmLabel}</span>
+            </div>
+            <div className="donation-live__stat">
+              <span className="donation-live__amount donation-live__amount--accent">
+                {formatDistanceKm(distanceKm, lang)}
+              </span>
+              <span className="donation-live__label">{t.totalToSkiLabel}</span>
+            </div>
           </div>
 
           <SkierScene />

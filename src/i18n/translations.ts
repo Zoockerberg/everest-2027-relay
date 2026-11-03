@@ -11,6 +11,8 @@ export interface Dict {
   heroTitleLine2: string;
   heroIntro: string;
   raisedSoFar: string;
+  extraKmLabel: string;
+  totalToSkiLabel: string;
   startsIn: string;
   countdownUnits: string;
   donateNow: string;
@@ -63,6 +65,8 @@ export const translations: Record<Lang, Dict> = {
     heroIntro:
       "Every dollar donated helps WA's sick kids at Perth Children's Hospital — and pushes us further across 24 hours of non-stop skiing.",
     raisedSoFar: "raised so far",
+    extraKmLabel: "extra km from donations",
+    totalToSkiLabel: "total to ski",
     startsIn: "Starts in",
     countdownUnits: "dd : hh : mm",
     donateNow: "Donate Now",
@@ -118,6 +122,8 @@ export const translations: Record<Lang, Dict> = {
     heroIntro:
       "Chaque dollar donné aide les enfants malades d'Australie-Occidentale à l'hôpital pour enfants de Perth — et nous pousse plus loin encore sur 24 heures de ski non-stop.",
     raisedSoFar: "récoltés à ce jour",
+    extraKmLabel: "km en plus grâce aux dons",
+    totalToSkiLabel: "au total à skier",
     startsIn: "Départ dans",
     countdownUnits: "jj : hh : mm",
     donateNow: "Faire un don",
