@@ -35,7 +35,7 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
       >
         <polygon
           points="0,420 0,250 150,150 290,226 430,96 560,210 700,130 820,240 960,146 1120,238 1260,168 1440,262 1440,420"
-          fill="#5a3a55"
+          fill="#5b67c2"
         />
       </svg>
       <svg
@@ -46,7 +46,7 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
       >
         <polygon
           points="0,420 0,300 210,196 360,268 520,120 660,244 790,186 940,286 1100,190 1240,272 1440,214 1440,420"
-          fill="#40283f"
+          fill="#3e4aa0"
         />
       </svg>
       <svg
@@ -57,7 +57,7 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
       >
         <polygon
           points="0,420 0,330 180,268 300,300 430,236 540,282 700,206 760,240 880,214 1010,286 1160,240 1300,300 1440,258 1440,420"
-          fill="#2a1a2c"
+          fill="#262f7e"
         />
       </svg>
 
@@ -107,7 +107,7 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
               <span className="donation-live__label">{t.extraKmLabel}</span>
             </div>
             <div className="donation-live__stat">
-              <span className="donation-live__amount donation-live__amount--accent">
+              <span className="donation-live__amount">
                 {formatDistanceKm(distanceKm, lang)}
               </span>
               <span className="donation-live__label">{t.totalToSkiLabel}</span>

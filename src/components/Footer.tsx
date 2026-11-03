@@ -10,7 +10,7 @@ export default function Footer() {
       <svg viewBox="0 0 1440 200" preserveAspectRatio="none" className="footer__ridge">
         <polygon
           points="0,200 0,150 180,92 340,140 520,60 660,132 820,86 980,146 1140,96 1300,150 1440,110 1440,200"
-          fill="#3b2740"
+          fill="#2b3588"
         />
       </svg>
       <div className="footer__inner">

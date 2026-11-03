@@ -64,7 +64,7 @@ export function useSnowCanvas(): React.RefObject<HTMLCanvasElement | null> {
         if (f.x < -8) f.x = w + 8;
         if (f.x > w + 8) f.x = -8;
         ctx.globalAlpha = f.a;
-        ctx.fillStyle = "#fdf3e7";
+        ctx.fillStyle = "#f8f6ff";
         ctx.beginPath();
         ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
         ctx.fill();

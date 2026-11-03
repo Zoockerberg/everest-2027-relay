@@ -1,34 +1,34 @@
 :root {
   color-scheme: dark;
 
-  --ink: #1a1320;
-  --surface: #221829;
-  --surface-sunk: #1e1626;
-  --surface-deep: #20141f;
+  --ink: #1c2160;
+  --surface: #232a72;
+  --surface-sunk: #1f2569;
+  --surface-deep: #1a1f5a;
 
-  --accent: #e8a06a;
-  --accent-light: #f6c98a;
+  --accent: #c3b4f5;
+  --accent-light: #e0d6ff;
 
-  --cream: #f6e7d6;
-  --cream-bright: #fbf1e6;
+  --cream: #fbf5ea;
+  --cream-bright: #fffaf2;
 
-  --body: #f0dcd2;
-  --body-2: #e4d3ce;
+  --body: #e6e3f7;
+  --body-2: #d9d5f0;
 
-  --muted: #bfa9b1;
-  --muted-2: #c0a3ae;
-  --muted-3: #d8c2c9;
-  --muted-deep: #8c7a85;
+  --muted: #aeb0dc;
+  --muted-2: #b0aedd;
+  --muted-3: #cfcdee;
+  --muted-deep: #7f83b8;
 
-  --disabled-text: #a7939f;
-  --disabled-text-2: #6d5f6b;
+  --disabled-text: #9a9cc8;
+  --disabled-text-2: #5f6399;
 
-  --plum-light: #6b4a63;
+  --plum-light: #5d6bc4;
 
-  --hairline-soft: rgba(246, 231, 214, 0.12);
-  --hairline-mid: rgba(246, 231, 214, 0.2);
-  --hairline-strong: rgba(246, 231, 214, 0.28);
-  --hairline-btn: rgba(246, 231, 214, 0.5);
+  --hairline-soft: rgba(251, 245, 234, 0.12);
+  --hairline-mid: rgba(251, 245, 234, 0.2);
+  --hairline-strong: rgba(251, 245, 234, 0.28);
+  --hairline-btn: rgba(251, 245, 234, 0.5);
 
   --font-display: "Barlow Condensed", Helvetica, sans-serif;
   --font-body: "Barlow", Helvetica, sans-serif;
@@ -141,7 +141,7 @@ button {
 }
 .btn--secondary:hover {
   border-color: var(--cream);
-  background: rgba(246, 231, 214, 0.12);
+  background: rgba(251, 245, 234, 0.12);
 }
 .btn--pulse {
   animation: livepulse 2.2s ease-out infinite;
@@ -149,13 +149,13 @@ button {
 
 @keyframes livepulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(232, 160, 106, 0.5);
+    box-shadow: 0 0 0 0 rgba(195, 180, 245, 0.5);
   }
   70% {
-    box-shadow: 0 0 0 14px rgba(232, 160, 106, 0);
+    box-shadow: 0 0 0 14px rgba(195, 180, 245, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(232, 160, 106, 0);
+    box-shadow: 0 0 0 0 rgba(195, 180, 245, 0);
   }
 }
 @keyframes dotblink {
@@ -203,7 +203,7 @@ button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: linear-gradient(to bottom, #1d1526 0%, #3b2740 34%, #7a4551 62%, #c9755a 82%, #eda874 100%);
+  background: linear-gradient(to bottom, #222a78 0%, #3a4aa6 34%, #7a7fd0 60%, #c8a9e0 80%, #f2c9c8 100%);
 }
 
 .hero__sun {
@@ -216,10 +216,10 @@ button {
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(249, 214, 164, 0.85) 0%,
-    rgba(246, 201, 138, 0.6) 46%,
-    rgba(246, 201, 138, 0.16) 62%,
-    rgba(246, 201, 138, 0) 72%
+    rgba(255, 240, 208, 0.85) 0%,
+    rgba(253, 228, 190, 0.6) 46%,
+    rgba(253, 228, 190, 0.16) 62%,
+    rgba(253, 228, 190, 0) 72%
   );
 }
 
@@ -267,7 +267,7 @@ button {
   right: 0;
   bottom: 0;
   height: 30%;
-  background: linear-gradient(to bottom, rgba(26, 19, 32, 0) 0%, rgba(26, 19, 32, 0.62) 62%, #1a1320 100%);
+  background: linear-gradient(to bottom, rgba(28, 33, 96, 0) 0%, rgba(28, 33, 96, 0.62) 62%, #1c2160 100%);
   pointer-events: none;
   contain: layout;
 }
@@ -288,7 +288,7 @@ button {
   font-size: 14px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #f2c9a2;
+  color: #d9cff7;
 }
 
 .hero__header-right {
@@ -347,7 +347,7 @@ button {
   gap: 10px;
   border: 1px solid var(--hairline-btn);
   padding: 7px 16px;
-  background: rgba(26, 19, 32, 0.55);
+  background: rgba(28, 33, 96, 0.55);
 }
 .hero__live-dot {
   width: 9px;
@@ -400,7 +400,7 @@ button {
   letter-spacing: -0.01em;
   margin: 0;
   color: var(--cream-bright);
-  text-shadow: 0 4px 30px rgba(26, 19, 32, 0.5);
+  text-shadow: 0 4px 30px rgba(28, 33, 96, 0.5);
   text-wrap: balance;
 }
 
@@ -414,40 +414,44 @@ button {
 }
 
 .donation-live {
-  margin-top: 16px;
+  margin-top: 22px;
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  justify-content: start;
-  gap: 0;
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 560px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(28, 33, 96, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 10px 30px rgba(12, 15, 50, 0.35);
 }
 .donation-live__stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 0 18px;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 18px;
   border-left: 1px solid var(--hairline-mid);
 }
 .donation-live__stat:first-child {
-  padding-left: 0;
   border-left: 0;
 }
-.donation-live__amount--accent {
-  color: var(--accent-light);
+/* The headline figure: filled lavender cell so the total reads first. */
+.donation-live__stat:last-child {
+  background: var(--accent);
+  border-left: 0;
 }
-@media (max-width: 420px) {
-  .donation-live__stat {
-    padding: 0 10px;
-  }
-  .donation-live .donation-live__label {
-    font-size: 10px;
-  }
+.donation-live__stat:last-child .donation-live__amount,
+.donation-live__stat:last-child .donation-live__label {
+  color: var(--ink);
 }
 .donation-live__dot {
   display: inline-block;
   vertical-align: middle;
-  margin: 0 8px 4px 0;
-  width: 8px;
-  height: 8px;
+  margin: 0 8px 6px 0;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--accent);
   animation: dotblink 1.4s ease-in-out infinite;
@@ -455,16 +459,32 @@ button {
 .donation-live__amount {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 20px;
-  letter-spacing: 0.02em;
+  font-size: clamp(26px, 4.2vw, 38px);
+  line-height: 1;
+  letter-spacing: 0.01em;
   color: var(--cream-bright);
+  white-space: nowrap;
 }
 .donation-live__label {
   font-family: var(--font-display);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   font-size: 12px;
-  color: var(--muted-3);
+  line-height: 1.25;
+  color: var(--body);
+}
+@media (max-width: 420px) {
+  .donation-live__stat {
+    padding: 12px 10px;
+  }
+  .donation-live .donation-live__amount {
+    font-size: 24px;
+  }
+  .donation-live .donation-live__label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
 }
 
 /* ---------- Skier scene ---------- */
@@ -488,7 +508,7 @@ button {
   bottom: 7.2%;
   width: 300vw;
   height: 12px;
-  background: #f2e7db;
+  background: #f4f1fb;
 }
 .scene__snow-fade {
   position: absolute;
@@ -497,7 +517,7 @@ button {
   bottom: -11%;
   width: 300vw;
   height: 18%;
-  background: linear-gradient(to bottom, #e0d0c4 0%, rgba(180, 158, 158, 0.45) 45%, rgba(120, 96, 110, 0) 100%);
+  background: linear-gradient(to bottom, #d6d3f0 0%, rgba(150, 150, 210, 0.45) 45%, rgba(90, 100, 180, 0) 100%);
 }
 .scene__svg {
   width: 100%;
@@ -700,7 +720,7 @@ button {
     border-color 120ms;
   background: var(--surface);
   border: 1px solid var(--hairline-strong);
-  color: #f2e6dc;
+  color: #f1eefb;
 }
 .slot-card--selected {
   background: var(--accent);
@@ -802,7 +822,7 @@ button {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(14, 9, 18, 0.78);
+  background: rgba(12, 15, 50, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -854,14 +874,14 @@ button {
   height: 40px;
   background: transparent;
   border: 1px solid var(--hairline-strong);
-  color: #f2e6dc;
+  color: #f1eefb;
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
 }
 .modal-close:hover {
   border-color: var(--cream);
-  background: rgba(246, 231, 214, 0.1);
+  background: rgba(251, 245, 234, 0.1);
 }
 
 .modal-fields {
