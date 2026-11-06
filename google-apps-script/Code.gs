@@ -263,5 +263,57 @@ function handleBookingSubmission_(e) {
   }
 
   getSheet_().appendRow([date, startTime, name, phone, "pending", new Date()]);
+  notifyNewBooking_(date, startTime, name, phone);
   return jsonOutput_({ ok: true });
+}
+
+// Who gets the "new booking" email. Leave empty to send it to the Google
+// account that owns/deployed the script (the web app runs as "Me", so
+// that's you). Put any address here — or several, comma-separated — to
+// send it somewhere else instead.
+const NOTIFY_EMAIL_ = "";
+
+function getNotifyEmail_() {
+  return NOTIFY_EMAIL_ || Session.getEffectiveUser().getEmail();
+}
+
+// Emails the organiser about a new pending booking so they don't have to
+// keep checking the Sheet. Wrapped in try/catch: the booking row is already
+// saved at this point, so a mail failure (e.g. daily quota hit) must never
+// turn a successful booking into an error for the person booking.
+function notifyNewBooking_(date, startTime, name, phone) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const pendingCount = countPendingBookings_();
+    const subject = "New Everest relay booking: " + name + " (" + date + " " + startTime + ")";
+    const body = [
+      "Someone just booked a slot on the Everest 2027 relay site.",
+      "",
+      "Name:  " + name,
+      "Phone: " + phone,
+      "Slot:  " + date + " at " + startTime,
+      "",
+      "It's saved as \"pending\". To confirm it, set its status cell to \"confirmed\" in the registrations tab:",
+      ss.getUrl() + "#gid=" + getSheet_().getSheetId(),
+      "",
+      "Pending bookings waiting for you: " + pendingCount,
+    ].join("\n");
+    MailApp.sendEmail(getNotifyEmail_(), subject, body);
+  } catch (err) {
+    console.error("Booking notification email failed: " + err);
+  }
+}
+
+function countPendingBookings_() {
+  const rows = getSheet_().getDataRange().getValues().slice(1);
+  return rows.filter((row) => String(row[COL_STATUS] || "").trim().toLowerCase() === "pending").length;
+}
+
+// Run this once from the Apps Script editor (pick it in the function
+// dropdown → Run) after pasting in this version: it triggers Google's
+// permission prompt for sending email, and sends you a sample notification
+// so you can check it arrives. It does NOT add a row to the Sheet.
+function testBookingNotification() {
+  notifyNewBooking_("2027-01-01", "06:00", "Test Person", "000 000 000");
+  console.log("Test notification sent to " + getNotifyEmail_());
 }

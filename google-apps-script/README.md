@@ -170,8 +170,9 @@ and doesn't move the total.
 ## Using it day to day
 
 - **New bookings** land as a new row in the `registrations` tab with
-  `status` = `pending`. There's no notification — check the Sheet when you
-  want to see what's come in.
+  `status` = `pending`, and you get an email with the person's name, phone,
+  slot, a link straight to the tab, and how many bookings are still
+  pending. See [Booking email notifications](#booking-email-notifications).
 - **To confirm one**, just edit that row's `status` cell to `confirmed`.
   Their name appears on the public schedule (and the slot fills up) the next
   time someone loads the page — no redeploy needed, the site fetches live
@@ -180,6 +181,32 @@ and doesn't move the total.
   than `confirmed` (e.g. `declined`) — it just won't show publicly.
 - Two confirmed rows for the same `date` + `start_time` = that slot shows as
   full.
+
+## Booking email notifications
+
+Every booking made through the site's form sends an email to the Google
+account that owns the script (that's you, since the web app runs as "Me").
+To send it to a different address — or several, comma-separated — set
+`NOTIFY_EMAIL_` near the bottom of [`Code.gs`](./Code.gs).
+
+**Turning it on** (one-time, after pasting in this version of `Code.gs`):
+
+1. In the Apps Script editor, pick **`testBookingNotification`** in the
+   function dropdown at the top and click **Run**.
+2. Google asks for a new permission ("Send email as you"). Approve it the
+   same way as the first setup (**Advanced → Go to (project name), unsafe →
+   Allow**).
+3. Check your inbox for a "New Everest relay booking: Test Person" email.
+   The test doesn't add anything to the Sheet.
+4. **Deploy → Manage deployments → edit (pencil icon) → New version →
+   Deploy**, so the live site uses the new code. The URL stays the same.
+
+**Good to know:**
+- Only bookings from the site's form trigger an email. Rows you add or edit
+  by hand in the Sheet don't.
+- Gmail accounts can send about 100 script emails a day, which is plenty
+  here. If that limit is ever hit, the booking still saves; the email is
+  just skipped.
 
 ## Redeploying the script after edits
 
