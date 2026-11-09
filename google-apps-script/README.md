@@ -123,9 +123,15 @@ one of Francois' own donations:
   later sends an updated call for the same `donation_id` — e.g. because a
   donation got refunded — that upsert naturally zeroes it back out of the
   total on the next recompute, no separate refund handling needed.
-- `Event.event_id` (must be `350`) and `Team.team_id` (must be `237`) are
-  both checked as extra sanity checks on top of Alex's fix — a call that
-  doesn't match either is logged but skipped, rather than trusted blindly.
+- `Event.event_id` must be `350`. A call that doesn't match is logged but
+  skipped, rather than trusted blindly. (`Team.team_id` used to have to be
+  `237` too, but Francois' page is no longer in a team, so real donations
+  arrive with no team at all. That check was dropped on 2026-11-09 after it
+  silently rejected a real donation. The team id is still logged.)
+- **If a donation was logged but didn't count** (e.g. it arrived before a
+  fix), run **`reprocessLoggedDonations`** from the Apps Script editor's
+  function dropdown. It re-applies everything in `donations_log` and is
+  safe to run repeatedly: nothing gets double-counted.
 
 **URL:** the Web app URL with `?type=donation` appended, e.g.
 ```
@@ -159,7 +165,7 @@ having the page open, no reload needed.
 ```bash
 curl -X POST "https://script.google.com/macros/s/AKfycb.../exec?type=donation" \
   -H "Content-Type: application/json" \
-  -d '{"Donation": {"donation_id": "test-1", "d_amount": "1000", "d_status": "paid"}, "Event": {"event_id": "350"}, "Team": {"team_id": "237"}}'
+  -d '{"Donation": {"donation_id": "test-1", "d_amount": "1000", "d_status": "paid"}, "Event": {"event_id": "350"}}'
 ```
 Then reload the site (or wait 30s) — the heading should jump to 190km
 (the end of the first tier). Re-send with the same `donation_id` and
