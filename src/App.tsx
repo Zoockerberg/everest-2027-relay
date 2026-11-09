@@ -6,7 +6,7 @@ import JoinModal from "./components/JoinModal";
 import ThanksModal from "./components/ThanksModal";
 import Footer from "./components/Footer";
 import { parseSlotKey, selectionLabel } from "./lib/schedule";
-import { fetchEventData, submitRegistration } from "./lib/api";
+import { fetchEventData, loadCachedEventData, submitRegistration } from "./lib/api";
 import { FALLBACK_CONFIRMED, LIVE_POLL_INTERVAL_MS, REGISTRATION_OPEN } from "./config";
 import { useLanguage } from "./i18n/LanguageContext";
 
@@ -14,8 +14,11 @@ export default function App() {
   const { lang, t } = useLanguage();
   const scheduleRef = useRef<HTMLElement>(null);
 
-  const [confirmed, setConfirmed] = useState(FALLBACK_CONFIRMED);
-  const [totalRaised, setTotalRaised] = useState(0);
+  // Start from the figures remembered from this visitor's last visit (if
+  // any), so the counter can start rolling up straight away.
+  const [cachedOnLoad] = useState(loadCachedEventData);
+  const [confirmed, setConfirmed] = useState(cachedOnLoad?.confirmed ?? FALLBACK_CONFIRMED);
+  const [totalRaised, setTotalRaised] = useState(cachedOnLoad?.totalRaised ?? 0);
   const [selected, setSelected] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
