@@ -1,6 +1,7 @@
 import { useParallax } from "../hooks/useParallax";
 import { useSnowCanvas } from "../hooks/useSnowCanvas";
 import { useCountdown } from "../hooks/useCountdown";
+import { useCountUp } from "../hooks/useCountUp";
 import SkierScene from "./SkierScene";
 import LanguageSwitch from "./LanguageSwitch";
 import pchfLogo from "../assets/pchf-logo.png";
@@ -20,8 +21,15 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
   const { isLive, liveNote, streamUrl, donateUrl } = EVENT_CONFIG;
   const { lang, t } = useLanguage();
   const distanceKm = distanceKmFromDonations(totalRaised);
-  // Rounded separately so base + bonus always adds up to the total shown.
-  const bonusKm = Math.round(distanceKm) - DISTANCE_CURVE[0].km;
+  // "Raised so far" and "extra km" roll up from 0 when the page loads. The
+  // extra km is derived from the animated dollar figure so both counters
+  // move together. Rounded separately so base + bonus always adds up to the
+  // total shown once the animation lands.
+  const animatedRaised = useCountUp(totalRaised);
+  const animatedBonusKm = Math.max(
+    0,
+    Math.round(distanceKmFromDonations(animatedRaised)) - DISTANCE_CURVE[0].km,
+  );
 
   return (
     <section className="hero">
@@ -98,12 +106,12 @@ export default function Hero({ onSkiClick, totalRaised }: HeroProps) {
             <div className="donation-live__stat">
               <span className="donation-live__amount">
                 <span className="donation-live__dot" />
-                {formatCurrency(totalRaised, lang)}
+                {formatCurrency(animatedRaised, lang)}
               </span>
               <span className="donation-live__label">{t.raisedSoFar}</span>
             </div>
             <div className="donation-live__stat">
-              <span className="donation-live__amount">+{formatDistanceKm(bonusKm, lang)}</span>
+              <span className="donation-live__amount">+{formatDistanceKm(animatedBonusKm, lang)}</span>
               <span className="donation-live__label">{t.extraKmLabel}</span>
             </div>
             <div className="donation-live__stat">

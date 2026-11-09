@@ -140,73 +140,106 @@ function doPost(e) {
   return handleBookingSubmission_(e);
 }
 
-// Sanity-check fields on every donation webhook call, per PCHF's Funraisin
-// admin (Alex, 2026-09-22): as of that date the webhook is configured on
-// their side to fire ONLY for donations made to Francois' own fundraiser
-// page (not the team page, and not any other team member's page) — he
-// confirmed those calls "should all have event_id = 350". team_id is kept
-// as a second, belt-and-suspenders check (Francois' page's team).
+// Sanity check on every donation webhook call, per PCHF's Funraisin admin
+// (Alex, 2026-09-22): the webhook is configured on their side to fire ONLY
+// for donations made to Francois' own fundraiser page, and he confirmed
+// those calls "should all have event_id = 350".
+//
+// There used to be a second check requiring Team.team_id = 237, but
+// Francois' page is no longer in a team: real donations now arrive with no
+// Team block at all (Donation.team_id = "0"), so that check was silently
+// rejecting every donation (first seen with donation 15823, 2026-11-09).
+// team_id is still logged for reference, just not required.
 const TARGET_EVENT_ID_ = "350";
-const TARGET_TEAM_IDS_ = ["237"];
 
 // Webhook contract — Funraisin POSTs to `<web app url>?type=donation` once
 // per donation, body shaped like:
-//   { "Donation": {...}, "Event": {...}, "Team": {...} }
-// (confirmed from a real test payload, 2026-09-21). Since Alex has now
-// restricted which donations trigger this webhook to just Francois' own
-// page (see above), it's safe to sum each donation's own amount
-// (Donation.d_amount) ourselves — unlike Team.total_raised, which is a
-// property of the whole team and would still include other members'
-// donations regardless of who triggers the webhook. Only donations whose
-// status is "paid" count; anything else (declined/pending/refunded)
-// contributes 0 — see the comment above getDonationsLedgerSheet_ for how
-// that also makes refunds self-correcting.
+//   { "Donation": {...}, "Event": {...}, "Team": {...} }   (Team optional)
+// Since only Francois' own page triggers this webhook (see above), it's
+// safe to sum each donation's own amount (Donation.d_amount). Only
+// donations whose status is "paid" count; anything else
+// (declined/pending/refunded) contributes 0 — see the comment above
+// getDonationsLedgerSheet_ for how that also makes refunds self-correcting.
 function handleDonationWebhook_(e) {
+  const rawBody = e.postData.contents;
   let body;
   try {
-    body = JSON.parse(e.postData.contents);
+    body = JSON.parse(rawBody);
   } catch {
+    logDonationWebhook_("", "", "", null, "", rawBody);
     return jsonOutput_({ ok: false, error: "Invalid JSON body" });
   }
+  const fields = extractDonationFields_(body);
+  logDonationWebhook_(fields.donationId, fields.eventId, fields.teamId, isFinite(fields.rawAmount) ? fields.rawAmount : null, fields.status, rawBody);
+  return jsonOutput_(applyDonation_(fields));
+}
 
-  const donation = body && body.Donation;
-  const event = body && body.Event;
-  const team = body && body.Team;
+function extractDonationFields_(body) {
+  const donation = (body && body.Donation) || {};
+  const event = (body && body.Event) || {};
+  const team = (body && body.Team) || {};
+  const pick = (...values) => {
+    for (const v of values) {
+      if (v !== undefined && v !== null && String(v) !== "") return String(v);
+    }
+    return "";
+  };
+  return {
+    donationId: pick(donation.donation_id),
+    eventId: pick(event.event_id, donation.event_id),
+    teamId: pick(team.team_id, donation.team_id),
+    rawAmount: Number(donation.d_amount),
+    status: String(donation.d_status || "").trim().toLowerCase(),
+  };
+}
 
-  const donationId = donation && donation.donation_id !== undefined ? String(donation.donation_id) : "";
-  const eventId = event && event.event_id !== undefined ? String(event.event_id) : "";
-  const teamId = team && team.team_id !== undefined ? String(team.team_id) : "";
-  const rawAmount = donation ? Number(donation.d_amount) : NaN;
-  const status = donation ? String(donation.d_status || "").trim().toLowerCase() : "";
-
-  logDonationWebhook_(donationId, eventId, teamId, isFinite(rawAmount) ? rawAmount : null, status, e.postData.contents);
-
-  if (!donationId) {
-    return jsonOutput_({
+// Validates one donation and, if it's ours, upserts it and re-sums the
+// total. Returns the JSON-able result object.
+function applyDonation_(f) {
+  if (!f.donationId) {
+    return {
       ok: false,
       error: "Could not find Donation.donation_id in the payload — see the donations_log sheet's raw_body column",
-    });
+    };
   }
-  if (eventId !== TARGET_EVENT_ID_ || TARGET_TEAM_IDS_.indexOf(teamId) === -1) {
-    return jsonOutput_({
-      ok: true,
-      skipped: true,
-      reason: "unexpected event_id/team_id",
-      eventId: eventId,
-      teamId: teamId,
-    });
+  if (f.eventId !== TARGET_EVENT_ID_) {
+    return { ok: true, skipped: true, reason: "unexpected event_id", eventId: f.eventId };
   }
-  if (!isFinite(rawAmount) || rawAmount < 0) {
-    return jsonOutput_({
+  if (!isFinite(f.rawAmount) || f.rawAmount < 0) {
+    return {
       ok: false,
       error: "Could not find a valid Donation.d_amount in the payload — see the donations_log sheet's raw_body column",
-    });
+    };
   }
-
-  const amount = status === "paid" ? rawAmount : 0;
-  upsertDonation_(donationId, amount, status);
+  const amount = f.status === "paid" ? f.rawAmount : 0;
+  upsertDonation_(f.donationId, amount, f.status);
   const total = recomputeTotalRaised_();
-  return jsonOutput_({ ok: true, donationId: donationId, amount: amount, totalRaised: total });
+  return { ok: true, donationId: f.donationId, amount: amount, totalRaised: total };
+}
+
+// Run from the Apps Script editor to re-apply every donation already in the
+// donations_log tab (e.g. ones that were wrongly skipped before a fix).
+// Safe to run any number of times: donations are upserted by id, so
+// nothing is double-counted.
+function reprocessLoggedDonations() {
+  const sheet = getDonationsLogSheet_();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    console.log("donations_log is empty — nothing to reprocess.");
+    return;
+  }
+  const rawBodies = sheet.getRange(2, 7, lastRow - 1, 1).getValues();
+  rawBodies.forEach((row, i) => {
+    let body;
+    try {
+      body = JSON.parse(String(row[0]));
+    } catch {
+      console.log("Row " + (i + 2) + ": raw_body isn't valid JSON, skipped");
+      return;
+    }
+    console.log("Row " + (i + 2) + ": " + JSON.stringify(applyDonation_(extractDonationFields_(body))));
+  });
+  console.log("Total raised is now " + getTotalRaised_());
 }
 
 function logDonationWebhook_(donationId, eventId, teamId, amount, status, rawBody) {
@@ -263,5 +296,65 @@ function handleBookingSubmission_(e) {
   }
 
   getSheet_().appendRow([date, startTime, name, phone, "pending", new Date()]);
+  notifyNewBooking_(date, startTime, name, phone);
   return jsonOutput_({ ok: true });
+}
+
+// Who gets the "new booking" email. Leave empty to send it to the Google
+// account that owns/deployed the script (the web app runs as "Me", so
+// that's you). Put any address here — or several, comma-separated — to
+// send it somewhere else instead.
+const NOTIFY_EMAIL_ = "";
+
+function getNotifyEmail_() {
+  return NOTIFY_EMAIL_ || Session.getEffectiveUser().getEmail();
+}
+
+// Emails the organiser about a new pending booking so they don't have to
+// keep checking the Sheet. Wrapped in try/catch: the booking row is already
+// saved at this point, so a mail failure (e.g. daily quota hit) must never
+// turn a successful booking into an error for the person booking.
+function notifyNewBooking_(date, startTime, name, phone) {
+  try {
+    sendBookingEmail_(date, startTime, name, phone);
+  } catch (err) {
+    console.error("Booking notification email failed: " + err);
+  }
+}
+
+function sendBookingEmail_(date, startTime, name, phone) {
+  {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const pendingCount = countPendingBookings_();
+    const subject = "New Everest relay booking: " + name + " (" + date + " " + startTime + ")";
+    const body = [
+      "Someone just booked a slot on the Everest 2027 relay site.",
+      "",
+      "Name:  " + name,
+      "Phone: " + phone,
+      "Slot:  " + date + " at " + startTime,
+      "",
+      "It's saved as \"pending\". To confirm it, set its status cell to \"confirmed\" in the registrations tab:",
+      ss.getUrl() + "#gid=" + getSheet_().getSheetId(),
+      "",
+      "Pending bookings waiting for you: " + pendingCount,
+    ].join("\n");
+    MailApp.sendEmail(getNotifyEmail_(), subject, body);
+  }
+}
+
+function countPendingBookings_() {
+  const rows = getSheet_().getDataRange().getValues().slice(1);
+  return rows.filter((row) => String(row[COL_STATUS] || "").trim().toLowerCase() === "pending").length;
+}
+
+// Run this once from the Apps Script editor (pick it in the function
+// dropdown → Run) after pasting in this version: it triggers Google's
+// permission prompt for sending email, and sends you a sample notification
+// so you can check it arrives. It does NOT add a row to the Sheet.
+function testBookingNotification() {
+  // Calls the email step directly (no try/catch) so a missing permission
+  // shows up as a real error here instead of a misleading "sent" message.
+  sendBookingEmail_("2027-01-01", "06:00", "Test Person", "000 000 000");
+  console.log("Test notification sent to " + getNotifyEmail_());
 }

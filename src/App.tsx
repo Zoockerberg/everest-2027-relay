@@ -28,7 +28,7 @@ export default function App() {
     let cancelled = false;
     const load = () => {
       fetchEventData().then((data) => {
-        if (cancelled) return;
+        if (cancelled || !data) return; // failed fetch: keep the last good figures
         setConfirmed(data.confirmed);
         setTotalRaised(data.totalRaised);
       });
