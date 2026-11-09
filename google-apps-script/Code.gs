@@ -283,6 +283,14 @@ function getNotifyEmail_() {
 // turn a successful booking into an error for the person booking.
 function notifyNewBooking_(date, startTime, name, phone) {
   try {
+    sendBookingEmail_(date, startTime, name, phone);
+  } catch (err) {
+    console.error("Booking notification email failed: " + err);
+  }
+}
+
+function sendBookingEmail_(date, startTime, name, phone) {
+  {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const pendingCount = countPendingBookings_();
     const subject = "New Everest relay booking: " + name + " (" + date + " " + startTime + ")";
@@ -299,8 +307,6 @@ function notifyNewBooking_(date, startTime, name, phone) {
       "Pending bookings waiting for you: " + pendingCount,
     ].join("\n");
     MailApp.sendEmail(getNotifyEmail_(), subject, body);
-  } catch (err) {
-    console.error("Booking notification email failed: " + err);
   }
 }
 
@@ -314,6 +320,8 @@ function countPendingBookings_() {
 // permission prompt for sending email, and sends you a sample notification
 // so you can check it arrives. It does NOT add a row to the Sheet.
 function testBookingNotification() {
-  notifyNewBooking_("2027-01-01", "06:00", "Test Person", "000 000 000");
+  // Calls the email step directly (no try/catch) so a missing permission
+  // shows up as a real error here instead of a misleading "sent" message.
+  sendBookingEmail_("2027-01-01", "06:00", "Test Person", "000 000 000");
   console.log("Test notification sent to " + getNotifyEmail_());
 }
