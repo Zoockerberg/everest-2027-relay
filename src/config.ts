@@ -27,10 +27,10 @@ export interface DayConfig {
 }
 
 // Event runs 24 hours from 6am Sat → 6am Sun. Public slots: Sat 6am–8pm
-// (14 slots), then core team covers 8pm–3am, then public 3am–6am (3 slots).
+// (14 slots), then core team covers 8pm–5am, then public 5am–6am (1 slot).
 export const DAYS_CONFIG: DayConfig[] = [
   { date: "2026-11-14", startHour: 6, count: 14 },
-  { date: "2026-11-15", startHour: 3, count: 3 },
+  { date: "2026-11-15", startHour: 5, count: 1 },
 ];
 
 // Fallback confirmed-registrations map, keyed by "YYYY-MM-DD HH:00" — used
