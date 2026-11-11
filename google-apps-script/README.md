@@ -175,18 +175,21 @@ and doesn't move the total.
 
 ## Using it day to day
 
-- **New bookings** land as a new row in the `registrations` tab with
-  `status` = `pending`, and you get an email with the person's name, phone,
-  slot, a link straight to the tab, and how many bookings are still
-  pending. See [Booking email notifications](#booking-email-notifications).
-- **To confirm one**, just edit that row's `status` cell to `confirmed`.
-  Their name appears on the public schedule (and the slot fills up) the next
-  time someone loads the page — no redeploy needed, the site fetches live
-  from the Sheet on every page load.
-- **To reject one**, either delete the row or set `status` to anything other
-  than `confirmed` (e.g. `declined`) — it just won't show publicly.
-- Two confirmed rows for the same `date` + `start_time` = that slot shows as
-  full.
+- **Bookings are confirmed instantly**, first come first served. Each one
+  lands as a new row in the `registrations` tab with `status` = `confirmed`
+  and shows on the public schedule straight away. You also get an email
+  with the person's name, phone and slot (see
+  [Booking email notifications](#booking-email-notifications)).
+- **A slot holds 2 people** (`SLOT_CAPACITY_` in [`Code.gs`](./Code.gs)).
+  The script checks for room and saves the booking as one locked step, so
+  two people can't both take the last place. The second person is told the
+  slot just filled up and asked to pick another.
+- **Only `confirmed` rows count** towards a slot's places. A row with any
+  other status (e.g. an old `pending` one) is ignored by the site.
+- **To cancel a booking**, delete the row or set its `status` to
+  `cancelled`. The place frees up straight away.
+- You can still add a booking by hand: add a row with `status` =
+  `confirmed`.
 
 ## Booking email notifications
 
