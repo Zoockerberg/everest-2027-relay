@@ -46,9 +46,10 @@ export interface Dict {
   confirm: string;
   submitting: string;
   submitError: string;
+  slotTakenError: string;
   modalFineprint: string;
   thanksTitle: string;
-  thanksPending: string;
+  thanksStatus: string;
   thanksBody: string;
   done: string;
   footerTagline: string;
@@ -104,11 +105,12 @@ export const translations: Record<Lang, Dict> = {
     confirm: "Confirm",
     submitting: "Sending…",
     submitError: "Something went wrong — please try again.",
+    slotTakenError: "Sorry, someone just took the last place in this slot — please pick another one.",
     modalFineprint:
-      "Your phone number is for the organiser only and is never shown on the page. Joining creates a pending registration for that hour.",
-    thanksTitle: "Thanks — we'll confirm your slot shortly",
-    thanksPending: "Pending",
-    thanksBody: "Your name appears on the schedule once the organiser confirms it.",
+      "Your phone number is for the organiser only and is never shown on the page. Your place is confirmed as soon as you join.",
+    thanksTitle: "You're in — see you on the SkiErg!",
+    thanksStatus: "Confirmed",
+    thanksBody: "Your name is now on the schedule.",
     done: "Done",
     footerTagline: "In support of PCHF · Project Beyond Limits",
     footerDonate: "Donate",
@@ -161,11 +163,12 @@ export const translations: Record<Lang, Dict> = {
     confirm: "Confirmer",
     submitting: "Envoi…",
     submitError: "Une erreur est survenue — veuillez réessayer.",
+    slotTakenError: "Désolé, quelqu'un vient de prendre la dernière place de ce créneau — choisissez-en un autre.",
     modalFineprint:
-      "Votre numéro de téléphone est réservé à l'organisateur et n'est jamais affiché sur la page. Votre inscription crée une réservation en attente pour cette heure.",
-    thanksTitle: "Merci — nous confirmerons votre créneau sous peu",
-    thanksPending: "En attente",
-    thanksBody: "Votre nom apparaîtra sur le planning une fois confirmé par l'organisateur.",
+      "Votre numéro de téléphone est réservé à l'organisateur et n'est jamais affiché sur la page. Votre place est confirmée dès votre inscription.",
+    thanksTitle: "C'est noté — rendez-vous sur le SkiErg !",
+    thanksStatus: "Confirmé",
+    thanksBody: "Votre nom figure maintenant sur le planning.",
     done: "Terminé",
     footerTagline: "Au profit de PCHF · Project Beyond Limits",
     footerDonate: "Faire un don",

@@ -77,18 +77,30 @@ export async function fetchEventData(): Promise<EventData | null> {
 // Sent as text/plain (not application/json) so this also stays a "simple"
 // request — Apps Script Web Apps don't handle the OPTIONS preflight that a
 // application/json POST would trigger. doPost parses the body as JSON itself.
-export async function submitRegistration(payload: RegistrationPayload): Promise<boolean> {
-  if (!APPS_SCRIPT_URL) return false;
+//
+// Bookings are confirmed instantly server-side (first come, first served).
+// "full" means someone else took the last place before this request landed;
+// `names` is then the slot's current confirmed list.
+export type RegistrationResult =
+  | { status: "confirmed"; names: string[] }
+  | { status: "full"; names: string[] }
+  | { status: "error" };
+
+export async function submitRegistration(payload: RegistrationPayload): Promise<RegistrationResult> {
+  if (!APPS_SCRIPT_URL) return { status: "error" };
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) return false;
+    if (!res.ok) return { status: "error" };
     const data = await res.json();
-    return !!data.ok;
+    const names = Array.isArray(data?.names) ? data.names.map(String) : [];
+    if (data?.ok) return { status: "confirmed", names: names.length ? names : [payload.name] };
+    if (data?.error === "slot_full") return { status: "full", names };
+    return { status: "error" };
   } catch {
-    return false;
+    return { status: "error" };
   }
 }

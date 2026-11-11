@@ -25,7 +25,7 @@ export default function App() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitError, setSubmitError] = useState<"error" | "full" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,18 +61,26 @@ export default function App() {
     setSelected(key);
     setModalOpen(false);
     setSubmitted(null);
-    setSubmitError(false);
+    setSubmitError(null);
   };
 
   const handleSubmit = async () => {
     if (!ready || !selected || submitting) return;
     setSubmitting(true);
-    setSubmitError(false);
+    setSubmitError(null);
     const { date, startTime } = parseSlotKey(selected);
-    const ok = await submitRegistration({ date, startTime, name: name.trim(), phone: phone.trim() });
+    const result = await submitRegistration({ date, startTime, name: name.trim(), phone: phone.trim() });
     setSubmitting(false);
-    if (!ok) {
-      setSubmitError(true);
+    if (result.status === "error") {
+      setSubmitError("error");
+      return;
+    }
+    // Show the slot's real line-up straight away (the live data can lag by
+    // up to ~40s): with the new name when confirmed, or as it now stands —
+    // i.e. full — when someone else got the last place first.
+    setConfirmed((prev) => ({ ...prev, [selected]: result.names }));
+    if (result.status === "full") {
+      setSubmitError("full");
       return;
     }
     setSubmitted(selected);

@@ -16,7 +16,7 @@ export default function ThanksModal({ submittedKey, onDone }: ThanksModalProps) 
       <div className="modal-panel modal-panel--center" onClick={stop}>
         <div className="modal-panel__title">{t.thanksTitle}</div>
         <p className="modal-panel__body">
-          {t.thanksPending}: {selectionLabel(submittedKey, lang, t)}. {t.thanksBody}
+          {t.thanksStatus}: {selectionLabel(submittedKey, lang, t)}. {t.thanksBody}
         </p>
         <button type="button" onClick={onDone} className="btn btn--done">
           {t.done}

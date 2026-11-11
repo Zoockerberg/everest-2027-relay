@@ -276,8 +276,18 @@ function recomputeTotalRaised_() {
 
 // Body (sent as text/plain to dodge the CORS preflight — see src/lib/api.ts):
 // { "date": "2026-10-03", "startTime": "06:00", "name": "...", "phone": "..." }
-// Appends a new row with status "pending". The organiser confirms it by
-// editing that cell to "confirmed" directly in the Sheet.
+//
+// Bookings are confirmed instantly, first come first served: the row is
+// written with status "confirmed" and shows on the public schedule right
+// away. A script lock makes the "is there still room?" check and the write
+// one atomic step, so two people submitting for the last place at the same
+// moment can't both get it — the second one gets { ok: false, error:
+// "slot_full" } and the site asks them to pick another slot.
+//
+// To cancel a booking, delete its row or change its status to anything
+// other than "confirmed" (e.g. "cancelled") — that frees the place.
+const SLOT_CAPACITY_ = 2;
+
 function handleBookingSubmission_(e) {
   let body;
   try {
@@ -295,9 +305,39 @@ function handleBookingSubmission_(e) {
     return jsonOutput_({ ok: false, error: "Missing required field" });
   }
 
-  getSheet_().appendRow([date, startTime, name, phone, "pending", new Date()]);
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(20000);
+  } catch {
+    return jsonOutput_({ ok: false, error: "busy" });
+  }
+  let names;
+  try {
+    names = confirmedNamesForSlot_(date, startTime);
+    if (names.length >= SLOT_CAPACITY_) {
+      return jsonOutput_({ ok: false, error: "slot_full", names: names });
+    }
+    getSheet_().appendRow([date, startTime, name, phone, "confirmed", new Date()]);
+    SpreadsheetApp.flush(); // make sure the row is written before the lock is released
+    names = names.concat([name]);
+  } finally {
+    lock.releaseLock();
+  }
+
   notifyNewBooking_(date, startTime, name, phone);
-  return jsonOutput_({ ok: true });
+  return jsonOutput_({ ok: true, status: "confirmed", names: names });
+}
+
+function confirmedNamesForSlot_(date, startTime) {
+  const rows = getSheet_().getDataRange().getValues().slice(1); // skip header
+  return rows
+    .filter(
+      (row) =>
+        String(row[COL_STATUS] || "").trim().toLowerCase() === "confirmed" &&
+        formatDateCell_(row[COL_DATE]) === date &&
+        formatTimeCell_(row[COL_START_TIME]) === startTime,
+    )
+    .map((row) => String(row[COL_NAME] || "").trim());
 }
 
 // Who gets the "new booking" email. Leave empty to send it to the Google
@@ -310,8 +350,8 @@ function getNotifyEmail_() {
   return NOTIFY_EMAIL_ || Session.getEffectiveUser().getEmail();
 }
 
-// Emails the organiser about a new pending booking so they don't have to
-// keep checking the Sheet. Wrapped in try/catch: the booking row is already
+// Emails the organiser about each new booking so they don't have to keep
+// checking the Sheet. Wrapped in try/catch: the booking row is already
 // saved at this point, so a mail failure (e.g. daily quota hit) must never
 // turn a successful booking into an error for the person booking.
 function notifyNewBooking_(date, startTime, name, phone) {
@@ -325,7 +365,7 @@ function notifyNewBooking_(date, startTime, name, phone) {
 function sendBookingEmail_(date, startTime, name, phone) {
   {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const pendingCount = countPendingBookings_();
+    const confirmedCount = countConfirmedBookings_();
     const subject = "New Everest relay booking: " + name + " (" + date + " " + startTime + ")";
     const body = [
       "Someone just booked a slot on the Everest 2027 relay site.",
@@ -334,18 +374,18 @@ function sendBookingEmail_(date, startTime, name, phone) {
       "Phone: " + phone,
       "Slot:  " + date + " at " + startTime,
       "",
-      "It's saved as \"pending\". To confirm it, set its status cell to \"confirmed\" in the registrations tab:",
+      "It's confirmed automatically and already on the public schedule. To cancel it, delete the row or set its status to \"cancelled\" in the registrations tab:",
       ss.getUrl() + "#gid=" + getSheet_().getSheetId(),
       "",
-      "Pending bookings waiting for you: " + pendingCount,
+      "Confirmed bookings so far: " + confirmedCount,
     ].join("\n");
     MailApp.sendEmail(getNotifyEmail_(), subject, body);
   }
 }
 
-function countPendingBookings_() {
+function countConfirmedBookings_() {
   const rows = getSheet_().getDataRange().getValues().slice(1);
-  return rows.filter((row) => String(row[COL_STATUS] || "").trim().toLowerCase() === "pending").length;
+  return rows.filter((row) => String(row[COL_STATUS] || "").trim().toLowerCase() === "confirmed").length;
 }
 
 // Run this once from the Apps Script editor (pick it in the function

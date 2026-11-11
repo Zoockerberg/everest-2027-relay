@@ -11,7 +11,7 @@ interface JoinModalProps {
   onSubmit: () => void;
   submitDisabled: boolean;
   submitting: boolean;
-  error: boolean;
+  error: "error" | "full" | null;
 }
 
 export default function JoinModal({
@@ -66,7 +66,7 @@ export default function JoinModal({
           >
             {submitting ? t.submitting : t.confirm}
           </button>
-          {error && <div className="modal-error">{t.submitError}</div>}
+          {error && <div className="modal-error">{error === "full" ? t.slotTakenError : t.submitError}</div>}
           <div className="modal-fineprint">{t.modalFineprint}</div>
         </div>
       </div>
