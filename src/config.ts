@@ -4,7 +4,7 @@
 export const EVENT_CONFIG = {
   isLive: false,
   liveNote: "Hour 12 · 41.6km down",
-  streamUrl: "https://www.youtube.com/",
+  streamUrl: "https://www.youtube.com/watch?v=LfEIme4luPI",
   donateUrl:
     "https://fundraisefor.pchf.org.au/fundraisers/francoisloose/everest-2027-project---100km-relay",
 };
