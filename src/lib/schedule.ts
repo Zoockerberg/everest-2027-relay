@@ -13,6 +13,7 @@ export function parseSlotKey(key: string): { date: string; startTime: string } {
 // English uses a 12h am/pm clock ("6:00am"); French uses a 24h clock with
 // "h" as the separator ("6h00"), the conventional local format.
 export function formatHour(hour: number, lang: Lang): string {
+  hour = hour % 24; // a slot ending at midnight ends at "12:00am" / "0h00", not "24"
   if (lang === "fr") {
     return `${hour}h00`;
   }
